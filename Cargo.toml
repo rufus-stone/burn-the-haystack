@@ -1,0 +1,9 @@
+[package]
+name = "bth"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+integer-encoding = "4.0.0"
+itertools = "0.12.0"
+time = { version = "0.3.31", features = ["macros", "formatting"] }

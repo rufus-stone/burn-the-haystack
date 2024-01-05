@@ -1,30 +1,50 @@
+pub mod ipaddr;
+pub mod location;
+pub mod macaddr;
 pub mod number;
 pub mod timestamp;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum Needle {
     Timestamp(timestamp::Timestamp),
-    Location,
-    IpAddr,
-    MacAddr,
-    Integer(i64),
-    Float(f64),
+    Location(location::Location),
+    IpAddr(ipaddr::IPv4),
+    MacAddr(macaddr::MACAddr),
+    Integer(number::Integer), //Integer(i64),
+    Float(number::Float),     // Float(f64),
     Bytes(Vec<u8>),
 }
 
+pub trait Matches {
+    fn matches(&self, rhs: &Self) -> bool;
+}
+
 impl Needle {
-    pub fn matches(&self, other: &[u8]) -> bool {
-        match &self {
-            Needle::Timestamp(lhs) => {
-                //
-                todo!()
-            }
-            Needle::Location => todo!(),
-            Needle::IpAddr => todo!(),
-            Needle::MacAddr => todo!(),
-            Needle::Integer(_) => todo!(),
-            Needle::Float(_) => todo!(),
-            Needle::Bytes(_) => todo!(),
+    pub fn matches(&self, rhs: &Needle) -> bool {
+        match (&self, &rhs) {
+            (Needle::Timestamp(lhs), Needle::Timestamp(rhs)) => lhs.matches(rhs),
+            // {
+            //     // If rhs has a tolerance, check that lhs falls wthin it
+            //     match rhs.tolerance {
+            //         Some(tolerance) => {
+            //             let actual_difference = (lhs.value - rhs.value).whole_seconds().abs();
+            //             let max_allowed_difference = tolerance.whole_seconds().abs();
+
+            //             // println!("Actual dif: {}", actual_difference);
+            //             // println!("Allowed dif: {}", max_allowed_difference);
+
+            //             actual_difference <= max_allowed_difference
+            //         }
+            //         None => lhs.value == rhs.value,
+            //     }
+            // }
+            (Needle::Location(lhs), Needle::Location(rhs)) => lhs == rhs,
+            (Needle::IpAddr(lhs), Needle::IpAddr(rhs)) => lhs == rhs,
+            (Needle::MacAddr(lhs), Needle::MacAddr(rhs)) => lhs == rhs,
+            (Needle::Integer(lhs), Needle::Integer(rhs)) => lhs.matches(rhs),
+            (Needle::Float(lhs), Needle::Float(rhs)) => lhs.matches(rhs),
+            (Needle::Bytes(lhs), Needle::Bytes(rhs)) => lhs == rhs,
+            _ => false,
         }
     }
 }
@@ -37,73 +57,11 @@ impl Discombobulate for Needle {
     fn discombobulate(&self) -> Vec<(Vec<u8>, String)> {
         match &self {
             Needle::Timestamp(timestamp) => timestamp.discombobulate(),
-            Needle::Location => todo!(),
-            Needle::IpAddr => todo!(),
-            Needle::MacAddr => todo!(),
-            Needle::Integer(i) => {
-                let mut variants = Vec::<(Vec<u8>, String)>::new();
-
-                // i64
-                let mut i64_variants = i.discombobulate();
-                variants.append(&mut i64_variants);
-
-                // u64
-                let mut u64_variants = (*i as u64).discombobulate();
-                variants.append(&mut u64_variants);
-
-                // i32
-                if *i < (i32::MAX as i64) && *i > (i32::MIN as i64) {
-                    let mut i32_variants = (*i as i32).discombobulate();
-                    variants.append(&mut i32_variants);
-                }
-
-                // u32
-                if *i < (u32::MAX as i64) && *i > (u32::MIN as i64) {
-                    let mut u32_variants = (*i as u32).discombobulate();
-                    variants.append(&mut u32_variants);
-                }
-
-                // i16
-                if *i < (i16::MAX as i64) && *i > (i16::MIN as i64) {
-                    let mut i16_variants = (*i as i16).discombobulate();
-                    variants.append(&mut i16_variants);
-                }
-
-                // u16
-                if *i < (u16::MAX as i64) && *i > (u16::MIN as i64) {
-                    let mut u16_variants = (*i as u16).discombobulate();
-                    variants.append(&mut u16_variants);
-                }
-
-                // i8
-                if *i < (i8::MAX as i64) && *i > (i8::MIN as i64) {
-                    let mut i8_variants = (*i as i8).discombobulate();
-                    variants.append(&mut i8_variants);
-                }
-
-                // u8
-                if *i < (u8::MAX as i64) && *i > (u8::MIN as i64) {
-                    let mut u8_variants = (*i as u8).discombobulate();
-                    variants.append(&mut u8_variants);
-                }
-
-                variants
-            }
-            Needle::Float(f) => {
-                let mut variants = Vec::<(Vec<u8>, String)>::new();
-
-                // f64
-                let mut f64_variants = f.discombobulate();
-                variants.append(&mut f64_variants);
-
-                // f32
-                if *f < (f32::MAX as f64) && *f > (f32::MIN as f64) {
-                    let mut f32_variants = (*f as f32).discombobulate();
-                    variants.append(&mut f32_variants);
-                }
-
-                variants
-            }
+            Needle::Location(_) => todo!(),
+            Needle::IpAddr(_) => todo!(),
+            Needle::MacAddr(_) => todo!(),
+            Needle::Integer(integer) => integer.discombobulate(),
+            Needle::Float(float) => float.discombobulate(),
             Needle::Bytes(bytes) => vec![(bytes.to_vec(), String::from("Byte sequence"))],
         }
     }
@@ -111,13 +69,16 @@ impl Discombobulate for Needle {
 
 #[cfg(test)]
 mod tests {
-    use std::f64::consts::PI;
 
-    use super::*;
+    use time::{macros::datetime, Duration};
+
+    use crate::needle::number::Integer;
+
+    use super::{timestamp::Timestamp, *};
 
     #[test]
     fn integer_zero() {
-        let needle = Needle::Integer(0);
+        let needle = Needle::Integer(number::Integer::new(0)); //Needle::Integer(0);
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
@@ -131,7 +92,7 @@ mod tests {
 
     #[test]
     fn integer_negative() {
-        let needle = Needle::Integer(-3);
+        let needle = Needle::Integer(number::Integer::new(-3));
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
@@ -145,7 +106,7 @@ mod tests {
 
     #[test]
     fn integer_positive() {
-        let needle = Needle::Integer(12345);
+        let needle = Needle::Integer(number::Integer::new(12345));
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
@@ -159,7 +120,7 @@ mod tests {
 
     #[test]
     fn float_zero() {
-        let needle = Needle::Float(0.0);
+        let needle = Needle::Float(number::Float::new(0.0));
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
@@ -173,7 +134,7 @@ mod tests {
 
     #[test]
     fn float_negative() {
-        let needle = Needle::Float(-1.0);
+        let needle = Needle::Float(number::Float::new(-1.0));
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
@@ -187,7 +148,7 @@ mod tests {
 
     #[test]
     fn float_positive() {
-        let needle = Needle::Float(2.2);
+        let needle = Needle::Float(number::Float::new(2.2));
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
@@ -197,5 +158,58 @@ mod tests {
         }
 
         assert_eq!(1, 1);
+    }
+
+    #[test]
+    fn matches_timestamp() {
+        // lhs is 12 hours prior to rhs, with a tolerance of 1 day (so DOES match)
+        let lhs = Needle::Timestamp(Timestamp::new(datetime!(2023-12-31 12:00:00)));
+
+        let rhs = Needle::Timestamp(Timestamp::with_tolerance(
+            datetime!(2024-01-01 00:00:00),
+            Duration::days(1),
+        ));
+
+        assert!(lhs.matches(&rhs));
+
+        // lhs is 1 full day after rhs, with a tolerance of 1 day (so DOES match)
+        let lhs = Needle::Timestamp(Timestamp::new(datetime!(2024-01-02 00:00:00)));
+
+        let rhs = Needle::Timestamp(Timestamp::with_tolerance(
+            datetime!(2024-01-01 00:00:00),
+            Duration::days(1),
+        ));
+
+        assert!(lhs.matches(&rhs));
+
+        // lhs is 30 seconds prior to rhs, with a tolerance of 1 minute (so DOES match)
+        let lhs = Needle::Timestamp(Timestamp::new(datetime!(2024-01-01 00:00:00)));
+
+        let rhs = Needle::Timestamp(Timestamp::with_tolerance(
+            datetime!(2024-01-01 00:00:30),
+            Duration::minutes(1),
+        ));
+
+        assert!(lhs.matches(&rhs));
+
+        // lhs is 5 seconds prior to rhs, with no tolerance (so does NOT match)
+        let lhs = Needle::Timestamp(Timestamp::new(datetime!(2023-12-31 23:59:55)));
+        let rhs = Needle::Timestamp(Timestamp::new(datetime!(2024-01-01 00:00:00)));
+
+        assert!(!lhs.matches(&rhs));
+
+        // lhs is exactly the same as rhs, with no tolerance (so DOES match)
+        let lhs = Needle::Timestamp(Timestamp::new(datetime!(2024-01-01 00:00:00)));
+        let rhs = Needle::Timestamp(Timestamp::new(datetime!(2024-01-01 00:00:00)));
+
+        assert!(lhs.matches(&rhs));
+    }
+
+    #[test]
+    fn matches_integer() {
+        let lhs = Needle::Integer(Integer::new(0));
+        let rhs = Needle::Integer(Integer::with_tolerance(10, 20));
+
+        assert!(lhs.matches(&rhs));
     }
 }

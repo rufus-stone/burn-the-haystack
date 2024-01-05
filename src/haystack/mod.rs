@@ -135,5 +135,9 @@ mod tests {
         let haystack = Haystack::with_needles(data, needles);
 
         let results = haystack.burn();
+
+        for result in &results {
+            println!("{:?}", result);
+        }
     }
 }

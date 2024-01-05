@@ -1,7 +1,9 @@
 use integer_encoding::VarInt;
 use time::{Date, Duration, Month, OffsetDateTime, PrimitiveDateTime, Time};
 
+use super::number;
 use super::Discombobulate;
+use super::Matches;
 
 pub fn u8_to_month(value: u8) -> Option<Month> {
     match value {
@@ -221,6 +223,24 @@ impl Discombobulate for Timestamp {
     }
 }
 
+impl Matches for Timestamp {
+    fn matches(&self, rhs: &Self) -> bool {
+        // If rhs has a tolerance, check that lhs falls wthin it
+        match rhs.tolerance {
+            Some(tolerance) => {
+                let actual_difference = (self.value - rhs.value).whole_seconds().abs();
+                let max_allowed_difference = tolerance.whole_seconds().abs();
+
+                // println!("Actual dif: {}", actual_difference);
+                // println!("Allowed dif: {}", max_allowed_difference);
+
+                actual_difference <= max_allowed_difference
+            }
+            None => self.value == rhs.value,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use time::{format_description, macros::datetime};
@@ -274,8 +294,6 @@ mod tests {
         for variant in dtg.discombobulate() {
             println!("{:02x?}", variant);
         }
-
-        let nye23 = Timestamp::new(datetime!(2023-12-31 23:59:59)).to_dos_time();
 
         let i1: i32 = -10;
         let v = i1.encode_var_vec();

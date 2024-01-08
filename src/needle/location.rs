@@ -17,7 +17,7 @@ impl Location {
             None
         } else {
             Some(Self {
-                value: Point::new(lon, lat),
+                value: Point::new(lon, lat), // A Point takes an x and a y, hence lon then lat rather than lat then lon
                 tolerance: None,
             })
         }

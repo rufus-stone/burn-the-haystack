@@ -1,3 +1,7 @@
+use time::{format_description, Duration, PrimitiveDateTime};
+
+use self::timestamp::Timestamp;
+
 pub mod ipaddr;
 pub mod location;
 pub mod macaddr;
@@ -15,53 +19,53 @@ pub enum Needle {
     Bytes(Vec<u8>),
 }
 
-// impl Needle {
-//     pub fn new_timestamp() -> Self {
-//         Self::Timestamp()
-//     }
-// }
+impl Needle {
+    // Timestamp creation
+    pub fn new_timestamp(dtg: &str) -> Option<Self> {
+        let format =
+            format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
 
-/*
-Do something like this to make needle creation cleaner
-
-macro_rules! impl_varint {
-    ($t:ty, unsigned) => {
-        impl VarInt for $t {
-            fn required_space(self) -> usize {
-                required_encoded_space_unsigned(self as u64)
-            }
-
-            fn decode_var(src: &[u8]) -> Option<(Self, usize)> {
-                let (n, s) = u64::decode_var(src)?;
-                Some((n as Self, s))
-            }
-
-            fn encode_var(self, dst: &mut [u8]) -> usize {
-                (self as u64).encode_var(dst)
-            }
+        if let Ok(datetime) = PrimitiveDateTime::parse(dtg, &format) {
+            Some(Self::Timestamp(Timestamp::new(datetime)))
+        } else {
+            None
         }
-    };
-    ($t:ty, signed) => {
-        impl VarInt for $t {
-            fn required_space(self) -> usize {
-                required_encoded_space_signed(self as i64)
-            }
+    }
 
-            fn decode_var(src: &[u8]) -> Option<(Self, usize)> {
-                let (n, s) = i64::decode_var(src)?;
-                Some((n as Self, s))
-            }
+    pub fn new_timestamp_with_tolerance(dtg: &str, tolerance: Duration) -> Option<Self> {
+        let format =
+            format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
 
-            fn encode_var(self, dst: &mut [u8]) -> usize {
-                (self as i64).encode_var(dst)
-            }
+        if let Ok(datetime) = PrimitiveDateTime::parse(dtg, &format) {
+            Some(Self::Timestamp(Timestamp::with_tolerance(
+                datetime, tolerance,
+            )))
+        } else {
+            None
         }
-    };
+    }
+
+    // Number creation
+    pub fn new_integer(value: i64) -> Option<Self> {
+        Some(Needle::Integer(number::Integer::new(value)))
+    }
+
+    pub fn new_integer_with_tolerance(value: i64, tolerance: i64) -> Option<Self> {
+        Some(Needle::Integer(number::Integer::with_tolerance(
+            value, tolerance,
+        )))
+    }
+
+    pub fn new_float(value: f64) -> Option<Self> {
+        Some(Needle::Float(number::Float::new(value)))
+    }
+
+    pub fn new_float_with_tolerance(value: f64, tolerance: f64) -> Option<Self> {
+        Some(Needle::Float(number::Float::with_tolerance(
+            value, tolerance,
+        )))
+    }
 }
-
-impl_varint!(usize, unsigned);
-
-*/
 
 pub trait Matches {
     fn matches(&self, rhs: &Self) -> bool;
@@ -112,11 +116,23 @@ mod tests {
         Discombobulate, Needle,
     };
 
-    //use super::{timestamp::Timestamp, *};
+    #[test]
+    fn new_timestamps() {
+        let needle = Needle::new_timestamp("2023-12-31 23:59:58").unwrap();
+        let variants = needle.discombobulate();
+
+        println!("{:?} ->", needle);
+
+        for variant in variants {
+            println!("{:>20} : {:02x?}", variant.1, variant.0);
+        }
+
+        assert_eq!(1, 1);
+    }
 
     #[test]
     fn integer_zero() {
-        let needle = Needle::Integer(number::Integer::new(0)); //Needle::Integer(0);
+        let needle = Needle::new_integer(0).unwrap(); //Needle::Integer(number::Integer::new(0));
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
@@ -130,7 +146,7 @@ mod tests {
 
     #[test]
     fn integer_negative() {
-        let needle = Needle::Integer(number::Integer::new(-3));
+        let needle = Needle::new_integer(-3).unwrap(); //Needle::Integer(number::Integer::new(-3));
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
@@ -144,7 +160,7 @@ mod tests {
 
     #[test]
     fn integer_positive() {
-        let needle = Needle::Integer(number::Integer::new(12345));
+        let needle = Needle::new_integer(12345).unwrap(); //Needle::Integer(number::Integer::new(12345));
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
@@ -158,7 +174,7 @@ mod tests {
 
     #[test]
     fn float_zero() {
-        let needle = Needle::Float(number::Float::new(0.0));
+        let needle = Needle::new_float(0.0).unwrap(); //Needle::Float(number::Float::new(0.0));
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
@@ -172,7 +188,7 @@ mod tests {
 
     #[test]
     fn float_negative() {
-        let needle = Needle::Float(number::Float::new(-1.0));
+        let needle = Needle::new_float(-1.0).unwrap(); //Needle::Float(number::Float::new(-1.0));
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
@@ -186,7 +202,7 @@ mod tests {
 
     #[test]
     fn float_positive() {
-        let needle = Needle::Float(number::Float::new(2.2));
+        let needle = Needle::new_float(2.2).unwrap(); //Needle::Float(number::Float::new(2.2));
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
@@ -201,44 +217,38 @@ mod tests {
     #[test]
     fn matches_timestamp() {
         // lhs is 12 hours prior to rhs, with a tolerance of 1 day (so DOES match)
-        let lhs = Needle::Timestamp(Timestamp::new(datetime!(2023-12-31 12:00:00)));
+        let lhs = Needle::new_timestamp("2023-12-31 12:00:00").unwrap();
 
-        let rhs = Needle::Timestamp(Timestamp::with_tolerance(
-            datetime!(2024-01-01 00:00:00),
-            Duration::days(1),
-        ));
+        let rhs =
+            Needle::new_timestamp_with_tolerance("2024-01-01 00:00:00", Duration::days(1)).unwrap();
 
         assert!(lhs.matches(&rhs));
 
         // lhs is 1 full day after rhs, with a tolerance of 1 day (so DOES match)
-        let lhs = Needle::Timestamp(Timestamp::new(datetime!(2024-01-02 00:00:00)));
+        let lhs = Needle::new_timestamp("2024-01-02 00:00:00").unwrap();
 
-        let rhs = Needle::Timestamp(Timestamp::with_tolerance(
-            datetime!(2024-01-01 00:00:00),
-            Duration::days(1),
-        ));
+        let rhs =
+            Needle::new_timestamp_with_tolerance("2024-01-01 00:00:00", Duration::days(1)).unwrap();
 
         assert!(lhs.matches(&rhs));
 
         // lhs is 30 seconds prior to rhs, with a tolerance of 1 minute (so DOES match)
-        let lhs = Needle::Timestamp(Timestamp::new(datetime!(2024-01-01 00:00:00)));
+        let lhs = Needle::new_timestamp("2024-01-01 00:00:00").unwrap();
 
-        let rhs = Needle::Timestamp(Timestamp::with_tolerance(
-            datetime!(2024-01-01 00:00:30),
-            Duration::minutes(1),
-        ));
+        let rhs = Needle::new_timestamp_with_tolerance("2024-01-01 00:00:30", Duration::minutes(1))
+            .unwrap();
 
         assert!(lhs.matches(&rhs));
 
         // lhs is 5 seconds prior to rhs, with no tolerance (so does NOT match)
-        let lhs = Needle::Timestamp(Timestamp::new(datetime!(2023-12-31 23:59:55)));
-        let rhs = Needle::Timestamp(Timestamp::new(datetime!(2024-01-01 00:00:00)));
+        let lhs = Needle::new_timestamp("2023-12-31 23:59:55").unwrap();
+        let rhs = Needle::new_timestamp("2024-01-01 00:00:00").unwrap();
 
         assert!(!lhs.matches(&rhs));
 
         // lhs is exactly the same as rhs, with no tolerance (so DOES match)
-        let lhs = Needle::Timestamp(Timestamp::new(datetime!(2024-01-01 00:00:00)));
-        let rhs = Needle::Timestamp(Timestamp::new(datetime!(2024-01-01 00:00:00)));
+        let lhs = Needle::new_timestamp("2024-01-01 00:00:00").unwrap();
+        let rhs = Needle::new_timestamp("2024-01-01 00:00:00").unwrap();
 
         assert!(lhs.matches(&rhs));
     }

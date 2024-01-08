@@ -8,4 +8,4 @@ geo = "0.27.0"
 integer-encoding = "4.0.0"
 itertools = "0.12.0"
 measurements = "0.11.0"
-time = { version = "0.3.31", features = ["macros", "formatting"] }
+time = { version = "0.3.31", features = ["macros", "formatting", "parsing"] }

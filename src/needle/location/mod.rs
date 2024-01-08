@@ -1,9 +1,11 @@
-use geo::{HaversineDistance, Point};
-use itertools::Itertools;
-use measurements::Distance;
-use std::iter::zip;
+pub mod variant;
 
-use super::{Discombobulate, Matches};
+use geo::{HaversineDistance, Point};
+use measurements::Distance;
+
+use self::variant::LocationVariant::*;
+
+use super::{variant::NeedleVariant, Discombobulate, Matches};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Location {
@@ -53,8 +55,8 @@ impl Matches for Location {
 }
 
 impl Discombobulate for Location {
-    fn discombobulate(&self) -> Vec<(Vec<u8>, String)> {
-        let mut variants = Vec::<(Vec<u8>, String)>::new();
+    fn discombobulate(&self) -> Vec<NeedleVariant> {
+        let mut variants = Vec::<NeedleVariant>::new();
 
         let (lon, lat) = self.value.x_y();
 
@@ -62,11 +64,8 @@ impl Discombobulate for Location {
         let dd_f64_le = [lat.to_le_bytes().as_slice(), lon.to_le_bytes().as_slice()].concat();
         let dd_f64_be = [lat.to_be_bytes().as_slice(), lon.to_be_bytes().as_slice()].concat();
 
-        variants.push((
-            dd_f64_le,
-            String::from("Decimal Degrees | f64 little endian"),
-        ));
-        variants.push((dd_f64_be, String::from("Decimal Degrees | f64 big endian")));
+        variants.push(NeedleVariant::Location(DecimalDegreesF64LE(dd_f64_le)));
+        variants.push(NeedleVariant::Location(DecimalDegreesF64BE(dd_f64_be)));
 
         // Also try as an f32
         if (f32::MIN as f64..=f32::MAX as f64).contains(&lat)
@@ -83,11 +82,8 @@ impl Discombobulate for Location {
             ]
             .concat();
 
-            variants.push((
-                dd_f32_le,
-                String::from("Decimal Degrees | f32 little endian"),
-            ));
-            variants.push((dd_f32_be, String::from("Decimal Degrees | f32 big endian")));
+            variants.push(NeedleVariant::Location(DecimalDegreesF32LE(dd_f32_le)));
+            variants.push(NeedleVariant::Location(DecimalDegreesF32BE(dd_f32_be)));
         }
 
         // TODO: add support for:

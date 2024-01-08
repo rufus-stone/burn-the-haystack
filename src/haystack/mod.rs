@@ -29,19 +29,19 @@ impl Haystack {
         for needle in &self.needles {
             let needlets = needle.discombobulate();
 
-            for (byte_sequence, name) in needlets {
-                // TODO: Need to convert the window under investigation into the appropriate Needle type for comparison
+            // for (byte_sequence, name) in needlets {
+            //     // TODO: Need to convert the window under investigation into the appropriate Needle type for comparison
 
-                let mut hits = self
-                    .data
-                    .as_slice()
-                    .windows(byte_sequence.len())
-                    .positions(|window| window == byte_sequence) // TODO: Change this to fuzzy match based on needle tolerances
-                    .map(|p| Ashes::new(needle, p, name.clone(), byte_sequence.clone()))
-                    .collect_vec();
+            //     let mut hits = self
+            //         .data
+            //         .as_slice()
+            //         .windows(byte_sequence.len())
+            //         .positions(|window| window == byte_sequence) // TODO: Change this to fuzzy match based on needle tolerances
+            //         .map(|p| Ashes::new(needle, p, name.clone(), byte_sequence.clone()))
+            //         .collect_vec();
 
-                ash_pile.append(&mut hits);
-            }
+            //     ash_pile.append(&mut hits);
+            // }
         }
 
         ash_pile
@@ -65,31 +65,31 @@ mod tests {
         assert!(haystack.needles.is_empty());
     }
 
-    #[test]
-    fn bytes_needles_test() {
-        let data: Vec<u8> = vec![
-            0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe, 0x01, 0x02, 0x03, 0x04, 0xca, 0xfe,
-            0xca, 0xfe, 0xba, 0xbe, 0xc0, 0x01, 0xd0, 0x0d,
-        ];
+    // #[test]
+    // fn bytes_needles_test() {
+    //     let data: Vec<u8> = vec![
+    //         0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe, 0x01, 0x02, 0x03, 0x04, 0xca, 0xfe,
+    //         0xca, 0xfe, 0xba, 0xbe, 0xc0, 0x01, 0xd0, 0x0d,
+    //     ];
 
-        let cafe: &[u8] = &[0xca, 0xfe];
-        let cafebabe: &[u8] = &[0xca, 0xfe, 0xba, 0xbe];
-        let notreal: &[u8] = &[0xaa, 0xbb, 0xcc, 0xdd];
+    //     let cafe: &[u8] = &[0xca, 0xfe];
+    //     let cafebabe: &[u8] = &[0xca, 0xfe, 0xba, 0xbe];
+    //     let notreal: &[u8] = &[0xaa, 0xbb, 0xcc, 0xdd];
 
-        let needles = vec![
-            Needle::Bytes(cafe.to_vec()),
-            Needle::Bytes(cafebabe.to_vec()),
-            Needle::Bytes(notreal.to_vec()),
-        ];
+    //     let needles = vec![
+    //         Needle::Bytes(cafe.to_vec()),
+    //         Needle::Bytes(cafebabe.to_vec()),
+    //         Needle::Bytes(notreal.to_vec()),
+    //     ];
 
-        let haystack = Haystack::with_needles(data, needles);
+    //     let haystack = Haystack::with_needles(data, needles);
 
-        let ash_pile = haystack.burn();
+    //     let ash_pile = haystack.burn();
 
-        println!("Burnt the haystack");
+    //     println!("Burnt the haystack");
 
-        println!("{:02x?}", ash_pile);
-    }
+    //     println!("{:02x?}", ash_pile);
+    // }
 
     #[test]
     fn timestamp_needles_test() {

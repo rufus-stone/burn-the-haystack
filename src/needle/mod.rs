@@ -1,25 +1,50 @@
 use time::{format_description, Duration, PrimitiveDateTime};
 
-use self::timestamp::Timestamp;
+use self::{timestamp::Timestamp, variant::NeedleVariant};
 
 pub mod ipaddr;
 pub mod location;
 pub mod macaddr;
 pub mod number;
 pub mod timestamp;
+pub mod variant;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Needle {
+    Bytes(Vec<u8>),
+    Integer(number::Integer),
+    Float(number::Float),
     Timestamp(timestamp::Timestamp),
     Location(location::Location),
     IpAddr(ipaddr::IPv4),
     MacAddr(macaddr::MACAddr),
-    Integer(number::Integer),
-    Float(number::Float),
-    Bytes(Vec<u8>),
 }
 
 impl Needle {
+    // Bytes creation
+
+    // Integer creation
+    pub fn new_integer(value: i64) -> Option<Self> {
+        Some(Needle::Integer(number::Integer::new(value)))
+    }
+
+    pub fn new_integer_with_tolerance(value: i64, tolerance: i64) -> Option<Self> {
+        Some(Needle::Integer(number::Integer::with_tolerance(
+            value, tolerance,
+        )))
+    }
+
+    // Float creation
+    pub fn new_float(value: f64) -> Option<Self> {
+        Some(Needle::Float(number::Float::new(value)))
+    }
+
+    pub fn new_float_with_tolerance(value: f64, tolerance: f64) -> Option<Self> {
+        Some(Needle::Float(number::Float::with_tolerance(
+            value, tolerance,
+        )))
+    }
+
     // Timestamp creation
     pub fn new_timestamp(dtg: &str) -> Option<Self> {
         let format =
@@ -44,27 +69,6 @@ impl Needle {
             None
         }
     }
-
-    // Number creation
-    pub fn new_integer(value: i64) -> Option<Self> {
-        Some(Needle::Integer(number::Integer::new(value)))
-    }
-
-    pub fn new_integer_with_tolerance(value: i64, tolerance: i64) -> Option<Self> {
-        Some(Needle::Integer(number::Integer::with_tolerance(
-            value, tolerance,
-        )))
-    }
-
-    pub fn new_float(value: f64) -> Option<Self> {
-        Some(Needle::Float(number::Float::new(value)))
-    }
-
-    pub fn new_float_with_tolerance(value: f64, tolerance: f64) -> Option<Self> {
-        Some(Needle::Float(number::Float::with_tolerance(
-            value, tolerance,
-        )))
-    }
 }
 
 pub trait Matches {
@@ -86,12 +90,14 @@ impl Needle {
     }
 }
 
+/// Trait for tranforming values into byte sequences
 pub trait Discombobulate {
-    fn discombobulate(&self) -> Vec<(Vec<u8>, String)>; // TODO: Change to HashMap
+    fn discombobulate(&self) -> Vec<NeedleVariant>;
 }
 
 impl Discombobulate for Needle {
-    fn discombobulate(&self) -> Vec<(Vec<u8>, String)> {
+    fn discombobulate(&self) -> Vec<NeedleVariant> {
+        //Vec<(Vec<u8>, String)> {
         match &self {
             Needle::Timestamp(timestamp) => timestamp.discombobulate(),
             Needle::Location(location) => location.discombobulate(),
@@ -99,22 +105,22 @@ impl Discombobulate for Needle {
             Needle::MacAddr(_) => todo!(),
             Needle::Integer(integer) => integer.discombobulate(),
             Needle::Float(float) => float.discombobulate(),
-            Needle::Bytes(bytes) => vec![(bytes.to_vec(), String::from("Byte sequence"))],
+            Needle::Bytes(bytes) => todo!(), //vec![(bytes.to_vec(), String::from("Byte sequence"))],
         }
     }
+}
+
+/// Trait for tranforming byte sequences into values
+pub trait Recombobulate {
+    fn recombobulate(bytes: &[u8]) -> Vec<(Vec<Needle>, String)>;
 }
 
 #[cfg(test)]
 mod tests {
 
-    use time::{macros::datetime, Duration};
+    use time::Duration;
 
-    use crate::needle::{
-        location::Location,
-        number::{self, *},
-        timestamp::Timestamp,
-        Discombobulate, Needle,
-    };
+    use crate::needle::{location::Location, number::*, Discombobulate, Needle};
 
     #[test]
     fn new_timestamps() {
@@ -124,7 +130,8 @@ mod tests {
         println!("{:?} ->", needle);
 
         for variant in variants {
-            println!("{:>20} : {:02x?}", variant.1, variant.0);
+            //println!("{:>20} : {:02x?}", variant.1, variant.0);
+            println!("{:02x?}", variant);
         }
 
         assert_eq!(1, 1);
@@ -132,13 +139,14 @@ mod tests {
 
     #[test]
     fn integer_zero() {
-        let needle = Needle::new_integer(0).unwrap(); //Needle::Integer(number::Integer::new(0));
+        let needle = Needle::new_integer(0).unwrap();
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
 
         for variant in variants {
-            println!("{:>20} : {:02x?}", variant.1, variant.0);
+            //println!("{:>20} : {:02x?}", variant.1, variant.0);
+            println!("{:02x?}", variant);
         }
 
         assert_eq!(1, 1);
@@ -146,13 +154,14 @@ mod tests {
 
     #[test]
     fn integer_negative() {
-        let needle = Needle::new_integer(-3).unwrap(); //Needle::Integer(number::Integer::new(-3));
+        let needle = Needle::new_integer(-3).unwrap();
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
 
         for variant in variants {
-            println!("{:>20} : {:02x?}", variant.1, variant.0);
+            //println!("{:>20} : {:02x?}", variant.1, variant.0);
+            println!("{:02x?}", variant);
         }
 
         assert_eq!(1, 1);
@@ -160,13 +169,14 @@ mod tests {
 
     #[test]
     fn integer_positive() {
-        let needle = Needle::new_integer(12345).unwrap(); //Needle::Integer(number::Integer::new(12345));
+        let needle = Needle::new_integer(12345).unwrap();
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
 
         for variant in variants {
-            println!("{:>20} : {:02x?}", variant.1, variant.0);
+            //println!("{:>20} : {:02x?}", variant.1, variant.0);
+            println!("{:02x?}", variant);
         }
 
         assert_eq!(1, 1);
@@ -174,13 +184,14 @@ mod tests {
 
     #[test]
     fn float_zero() {
-        let needle = Needle::new_float(0.0).unwrap(); //Needle::Float(number::Float::new(0.0));
+        let needle = Needle::new_float(0.0).unwrap();
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
 
         for variant in variants {
-            println!("{:>20} : {:02x?}", variant.1, variant.0);
+            //println!("{:>20} : {:02x?}", variant.1, variant.0);
+            println!("{:02x?}", variant);
         }
 
         assert_eq!(1, 1);
@@ -188,13 +199,14 @@ mod tests {
 
     #[test]
     fn float_negative() {
-        let needle = Needle::new_float(-1.0).unwrap(); //Needle::Float(number::Float::new(-1.0));
+        let needle = Needle::new_float(-1.0).unwrap();
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
 
         for variant in variants {
-            println!("{:>20} : {:02x?}", variant.1, variant.0);
+            //println!("{:>20} : {:02x?}", variant.1, variant.0);
+            println!("{:02x?}", variant);
         }
 
         assert_eq!(1, 1);
@@ -202,13 +214,14 @@ mod tests {
 
     #[test]
     fn float_positive() {
-        let needle = Needle::new_float(2.2).unwrap(); //Needle::Float(number::Float::new(2.2));
+        let needle = Needle::new_float(2.2).unwrap();
         let variants = needle.discombobulate();
 
         println!("{:?} ->", needle);
 
         for variant in variants {
-            println!("{:>20} : {:02x?}", variant.1, variant.0);
+            //println!("{:>20} : {:02x?}", variant.1, variant.0);
+            println!("{:02x?}", variant);
         }
 
         assert_eq!(1, 1);
@@ -270,7 +283,8 @@ mod tests {
         println!("{:?} ->", needle);
 
         for variant in variants {
-            println!("{:>20} : {:02x?}", variant.1, variant.0);
+            //println!("{:>20} : {:02x?}", variant.1, variant.0);
+            println!("{:02x?}", variant);
         }
 
         assert_eq!(1, 1);

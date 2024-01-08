@@ -1,7 +1,11 @@
+pub mod variants;
+
 use integer_encoding::VarInt;
 use time::{Date, Duration, Month, OffsetDateTime, PrimitiveDateTime, Time};
 
-use super::number;
+use self::variants::TimestampVariant::*;
+
+use super::variant::NeedleVariant;
 use super::Discombobulate;
 use super::Matches;
 
@@ -138,77 +142,66 @@ impl Matches for Timestamp {
 }
 
 impl Discombobulate for Timestamp {
-    fn discombobulate(&self) -> Vec<(Vec<u8>, String)> {
-        let mut variants = Vec::<(Vec<u8>, String)>::new();
+    fn discombobulate(&self) -> Vec<NeedleVariant> {
+        let mut variants = Vec::<NeedleVariant>::new();
 
         // Epoch seconds
         let epoch_secs = self.value.assume_utc().unix_timestamp() as i32;
         let epoch_secs_le_bytes = epoch_secs.to_le_bytes().as_slice().to_owned();
-        variants.push((
-            epoch_secs_le_bytes,
-            String::from("Epoch Seconds | i32 little endian"),
-        ));
+        variants.push(NeedleVariant::Timestamp(EpochSecsLE(epoch_secs_le_bytes)));
+
         let epoch_secs_be_bytes = epoch_secs.to_be_bytes().as_slice().to_owned();
-        variants.push((
-            epoch_secs_be_bytes,
-            String::from("Epoch Seconds | i32 big endian"),
-        ));
+        variants.push(NeedleVariant::Timestamp(EpochSecsBE(epoch_secs_be_bytes)));
+
         let epoch_secs_varint = epoch_secs.encode_var_vec();
-        variants.push((
-            epoch_secs_varint,
-            String::from("Epoch Seconds | i32 varint"),
-        ));
+        variants.push(NeedleVariant::Timestamp(EpochSecsVarint(epoch_secs_varint)));
 
         // Epoch millis
         let epoch_millis = (epoch_secs as i64) * 1000;
         let epoch_millis_le_bytes = epoch_millis.to_le_bytes().as_slice().to_owned();
-        variants.push((
+        variants.push(NeedleVariant::Timestamp(EpochMillisLE(
             epoch_millis_le_bytes,
-            String::from("Epoch Millis | i64 little endian"),
-        ));
+        )));
+
         let epoch_millis_be_bytes = epoch_millis.to_be_bytes().as_slice().to_owned();
-        variants.push((
+        variants.push(NeedleVariant::Timestamp(EpochMillisBE(
             epoch_millis_be_bytes,
-            String::from("Epoch Millis | i64 big endian"),
-        ));
+        )));
+
         let epoch_millis_varint = epoch_millis.encode_var_vec();
-        variants.push((
+        variants.push(NeedleVariant::Timestamp(EpochMillisVarint(
             epoch_millis_varint,
-            String::from("Epoch Millis | i64 varint"),
-        ));
+        )));
 
         // Epoch micros
         let epoch_micros = epoch_millis * 1000;
         let epoch_micros_le_bytes = epoch_micros.to_le_bytes().as_slice().to_owned();
-        variants.push((
+        variants.push(NeedleVariant::Timestamp(EpochMicrosLE(
             epoch_micros_le_bytes,
-            String::from("Epoch Micros | i64 little endian"),
-        ));
+        )));
+
         let epoch_micros_be_bytes = epoch_micros.to_be_bytes().as_slice().to_owned();
-        variants.push((
+        variants.push(NeedleVariant::Timestamp(EpochMicrosBE(
             epoch_micros_be_bytes,
-            String::from("Epoch Micros | i64 big endian"),
-        ));
+        )));
+
         let epoch_micros_varint = epoch_micros.encode_var_vec();
-        variants.push((
+        variants.push(NeedleVariant::Timestamp(EpochMicrosVarint(
             epoch_micros_varint,
-            String::from("Epoch Micros | i64 varint"),
-        ));
+        )));
 
         // Epoch nanos
         let epoch_nanos = epoch_micros * 1000;
         let epoch_nanos_le_bytes = epoch_nanos.to_le_bytes().as_slice().to_owned();
-        variants.push((
-            epoch_nanos_le_bytes,
-            String::from("Epoch Nanos | i64 little endian"),
-        ));
+        variants.push(NeedleVariant::Timestamp(EpochNanosLE(epoch_nanos_le_bytes)));
+
         let epoch_nanos_be_bytes = epoch_nanos.to_be_bytes().as_slice().to_owned();
-        variants.push((
-            epoch_nanos_be_bytes,
-            String::from("Epoch Nanos | i64 big endian"),
-        ));
+        variants.push(NeedleVariant::Timestamp(EpochNanosBE(epoch_nanos_be_bytes)));
+
         let epoch_nanos_varint = epoch_nanos.encode_var_vec();
-        variants.push((epoch_nanos_varint, String::from("Epoch Nanos | i64 varint")));
+        variants.push(NeedleVariant::Timestamp(EpochNanosVarint(
+            epoch_nanos_varint,
+        )));
 
         // 18-digit 'Windows NT time format', 'Win32 FILETIME or SYSTEMTIME' or NTFS file time
         // The timestamp is the number of 100-nanosecond intervals (1 nanosecond = one billionth of a second) since Jan 1, 1601 UTC
@@ -229,12 +222,10 @@ impl Discombobulate for Timestamp {
         // DOS/FAT timestamp
         let dos_time = self.to_dos_time();
         let dos_time_le_bytes = dos_time.to_le_bytes().as_slice().to_owned();
-        variants.push((
-            dos_time_le_bytes,
-            String::from("DOS Time | u32 little endian"),
-        ));
+        variants.push(NeedleVariant::Timestamp(DOSTimeLE(dos_time_le_bytes)));
+
         let dos_time_be_bytes = dos_time.to_be_bytes().as_slice().to_owned();
-        variants.push((dos_time_be_bytes, String::from("DOS Time | u32 big endian")));
+        variants.push(NeedleVariant::Timestamp(DOSTimeBE(dos_time_be_bytes)));
 
         // NTP timestamp
 

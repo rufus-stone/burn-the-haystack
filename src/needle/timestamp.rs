@@ -23,7 +23,8 @@ pub fn u8_to_month(value: u8) -> Option<Month> {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+//#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Timestamp {
     pub value: PrimitiveDateTime,
     pub tolerance: Option<Duration>,
@@ -114,6 +115,24 @@ impl Timestamp {
             )))
         } else {
             None
+        }
+    }
+}
+
+impl Matches for Timestamp {
+    fn matches(&self, rhs: &Self) -> bool {
+        // If rhs has a tolerance, check that lhs falls wthin it
+        match rhs.tolerance {
+            Some(tolerance) => {
+                let actual_difference = (self.value - rhs.value).whole_seconds().abs();
+                let max_allowed_difference = tolerance.whole_seconds().abs();
+
+                // println!("Actual dif: {}", actual_difference);
+                // println!("Allowed dif: {}", max_allowed_difference);
+
+                actual_difference <= max_allowed_difference
+            }
+            None => self.value == rhs.value,
         }
     }
 }
@@ -220,24 +239,6 @@ impl Discombobulate for Timestamp {
         // NTP timestamp
 
         variants
-    }
-}
-
-impl Matches for Timestamp {
-    fn matches(&self, rhs: &Self) -> bool {
-        // If rhs has a tolerance, check that lhs falls wthin it
-        match rhs.tolerance {
-            Some(tolerance) => {
-                let actual_difference = (self.value - rhs.value).whole_seconds().abs();
-                let max_allowed_difference = tolerance.whole_seconds().abs();
-
-                // println!("Actual dif: {}", actual_difference);
-                // println!("Allowed dif: {}", max_allowed_difference);
-
-                actual_difference <= max_allowed_difference
-            }
-            None => self.value == rhs.value,
-        }
     }
 }
 

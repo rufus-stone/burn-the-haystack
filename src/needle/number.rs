@@ -2,7 +2,8 @@ use integer_encoding::VarInt;
 
 use super::{Discombobulate, Matches};
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+//#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Integer {
     value: i64,
     tolerance: Option<i64>,
@@ -55,37 +56,43 @@ impl Discombobulate for Integer {
         variants.append(&mut u64_variants);
 
         // i32
-        if self.value < (i32::MAX as i64) && self.value > (i32::MIN as i64) {
+        if (i32::MIN as i64..=i32::MAX as i64).contains(&self.value) {
+            //if self.value < (i32::MAX as i64) && self.value > (i32::MIN as i64) {
             let mut i32_variants = (self.value as i32).discombobulate();
             variants.append(&mut i32_variants);
         }
 
         // u32
-        if self.value < (u32::MAX as i64) && self.value > (u32::MIN as i64) {
+        if (u32::MIN as i64..=u32::MAX as i64).contains(&self.value) {
+            //if self.value < (u32::MAX as i64) && self.value > (u32::MIN as i64) {
             let mut u32_variants = (self.value as u32).discombobulate();
             variants.append(&mut u32_variants);
         }
 
         // i16
-        if self.value < (i16::MAX as i64) && self.value > (i16::MIN as i64) {
+        if (i16::MIN as i64..=i16::MAX as i64).contains(&self.value) {
+            //if self.value < (i16::MAX as i64) && self.value > (i16::MIN as i64) {
             let mut i16_variants = (self.value as i16).discombobulate();
             variants.append(&mut i16_variants);
         }
 
         // u16
-        if self.value < (u16::MAX as i64) && self.value > (u16::MIN as i64) {
+        if (u16::MIN as i64..=u16::MAX as i64).contains(&self.value) {
+            //if self.value < (u16::MAX as i64) && self.value > (u16::MIN as i64) {
             let mut u16_variants = (self.value as u16).discombobulate();
             variants.append(&mut u16_variants);
         }
 
         // i8
-        if self.value < (i8::MAX as i64) && self.value > (i8::MIN as i64) {
+        if (i8::MIN as i64..=i8::MAX as i64).contains(&self.value) {
+            //if self.value < (i8::MAX as i64) && self.value > (i8::MIN as i64) {
             let mut i8_variants = (self.value as i8).discombobulate();
             variants.append(&mut i8_variants);
         }
 
         // u8
-        if self.value < (u8::MAX as i64) && self.value > (u8::MIN as i64) {
+        if (u8::MIN as i64..=u8::MAX as i64).contains(&self.value) {
+            //self.value < (u8::MAX as i64) && self.value > (u8::MIN as i64) {
             let mut u8_variants = (self.value as u8).discombobulate();
             variants.append(&mut u8_variants);
         }
@@ -143,7 +150,8 @@ impl Discombobulate for Float {
         variants.append(&mut f64_variants);
 
         // f32
-        if self.value < (f32::MAX as f64) && self.value > (f32::MIN as f64) {
+        if (f32::MIN as f64..=f32::MAX as f64).contains(&self.value) {
+            //if self.value < (f32::MAX as f64) && self.value > (f32::MIN as f64) {
             let mut f32_variants = (self.value as f32).discombobulate();
             variants.append(&mut f32_variants);
         }

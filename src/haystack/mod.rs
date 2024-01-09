@@ -27,7 +27,18 @@ impl Haystack {
         let mut ash_pile = Vec::<Ashes>::new();
 
         for needle in &self.needles {
-            let needlets = needle.discombobulate();
+            let needle_variants = needle.discombobulate();
+
+            // for needle_variant in needle_variants {
+            //     let byte_sequence = needle_variant.byte_sequence();
+            //     let r = self
+            //         .data
+            //         .as_slice()
+            //         .windows(byte_sequence.len())
+            //         .positions(|window| {
+            //             // Need to turn bytes back into variants and back into needles, then needle.match()
+            //         });
+            // }
 
             // for (byte_sequence, name) in needlets {
             //     // TODO: Need to convert the window under investigation into the appropriate Needle type for comparison

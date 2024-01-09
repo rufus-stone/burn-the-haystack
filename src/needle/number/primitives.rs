@@ -1,5 +1,7 @@
+use anyhow::Result;
 use integer_encoding::VarInt;
 
+use crate::needle::Recombobulate;
 use crate::needle::{variant::NeedleVariant, Discombobulate};
 
 use super::variants::FloatVariant::*;

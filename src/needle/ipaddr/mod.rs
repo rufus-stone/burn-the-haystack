@@ -1,3 +1,5 @@
+pub mod variant;
+
 use ipnet::Ipv4Net;
 use std::net::Ipv4Addr;
 

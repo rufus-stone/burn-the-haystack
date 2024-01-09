@@ -1,13 +1,14 @@
-use time::{format_description, Duration, PrimitiveDateTime};
-
-use self::{timestamp::Timestamp, variant::NeedleVariant};
-
 pub mod ipaddr;
 pub mod location;
 pub mod macaddr;
 pub mod number;
 pub mod timestamp;
 pub mod variant;
+
+use anyhow::Result;
+use time::{format_description, Duration, PrimitiveDateTime};
+
+use self::{timestamp::Timestamp, variant::NeedleVariant};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Needle {
@@ -90,7 +91,7 @@ impl Needle {
     }
 }
 
-/// Trait for tranforming values into byte sequences
+/// Trait for tranforming a Needle into all possible NeedleVariant byte sequences
 pub trait Discombobulate {
     fn discombobulate(&self) -> Vec<NeedleVariant>;
 }
@@ -105,14 +106,14 @@ impl Discombobulate for Needle {
             Needle::MacAddr(_) => todo!(),
             Needle::Integer(integer) => integer.discombobulate(),
             Needle::Float(float) => float.discombobulate(),
-            Needle::Bytes(bytes) => todo!(), //vec![(bytes.to_vec(), String::from("Byte sequence"))],
+            Needle::Bytes(_) => todo!(),
         }
     }
 }
 
-/// Trait for tranforming byte sequences into values
+/// Trait for tranforming a NeedleVariant back into its Needle
 pub trait Recombobulate {
-    fn recombobulate(bytes: &[u8]) -> Vec<(Vec<Needle>, String)>;
+    fn recombobulate(&self) -> Result<Needle>;
 }
 
 #[cfg(test)]

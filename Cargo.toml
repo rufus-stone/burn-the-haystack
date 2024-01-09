@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.79"
 geo = "0.27.0"
 integer-encoding = "4.0.0"
 ipnet = "2.9.0"

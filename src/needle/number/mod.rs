@@ -58,42 +58,36 @@ impl Discombobulate for Integer {
 
         // i32
         if (i32::MIN as i64..=i32::MAX as i64).contains(&self.value) {
-            //if self.value < (i32::MAX as i64) && self.value > (i32::MIN as i64) {
             let mut i32_variants = (self.value as i32).discombobulate();
             variants.append(&mut i32_variants);
         }
 
         // u32
         if (u32::MIN as i64..=u32::MAX as i64).contains(&self.value) {
-            //if self.value < (u32::MAX as i64) && self.value > (u32::MIN as i64) {
             let mut u32_variants = (self.value as u32).discombobulate();
             variants.append(&mut u32_variants);
         }
 
         // i16
         if (i16::MIN as i64..=i16::MAX as i64).contains(&self.value) {
-            //if self.value < (i16::MAX as i64) && self.value > (i16::MIN as i64) {
             let mut i16_variants = (self.value as i16).discombobulate();
             variants.append(&mut i16_variants);
         }
 
         // u16
         if (u16::MIN as i64..=u16::MAX as i64).contains(&self.value) {
-            //if self.value < (u16::MAX as i64) && self.value > (u16::MIN as i64) {
             let mut u16_variants = (self.value as u16).discombobulate();
             variants.append(&mut u16_variants);
         }
 
         // i8
         if (i8::MIN as i64..=i8::MAX as i64).contains(&self.value) {
-            //if self.value < (i8::MAX as i64) && self.value > (i8::MIN as i64) {
             let mut i8_variants = (self.value as i8).discombobulate();
             variants.append(&mut i8_variants);
         }
 
         // u8
         if (u8::MIN as i64..=u8::MAX as i64).contains(&self.value) {
-            //self.value < (u8::MAX as i64) && self.value > (u8::MIN as i64) {
             let mut u8_variants = (self.value as u8).discombobulate();
             variants.append(&mut u8_variants);
         }
@@ -102,10 +96,18 @@ impl Discombobulate for Integer {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Debug)]
 pub struct Float {
     value: f64,
     tolerance: Option<f64>,
+}
+
+impl PartialEq for Float {
+    fn eq(&self, other: &Self) -> bool {
+        // Deliberately drop precision to f32 to allow for comparison between Floats created with an f64 and Floats recombobulated from an f32 variant
+        self.value as f32 == other.value as f32 && self.tolerance == other.tolerance
+        // TODO: impl PartialEq for all Needles and use .matches() instead of ==
+    }
 }
 
 impl Float {

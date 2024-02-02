@@ -1,3 +1,7 @@
+use anyhow::{anyhow, Result};
+
+use crate::needle::{number::variants::IntegerVariant, Needle, Recombobulate};
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum TimestampVariant {
     // Epoch seconds
@@ -23,4 +27,31 @@ pub enum TimestampVariant {
     // DOS time
     DOSTimeLE(Vec<u8>),
     DOSTimeBE(Vec<u8>),
+}
+
+impl TimestampVariant {
+    pub fn as_epoch_secs_le(data: &[u8]) -> Result<(TimestampVariant, u8)> {
+        todo!()
+    }
+}
+
+impl Recombobulate for TimestampVariant {
+    fn recombobulate(&self) -> Result<Needle> {
+        match self {
+            TimestampVariant::EpochSecsLE(_) => todo!(),
+            TimestampVariant::EpochSecsBE(_) => todo!(),
+            TimestampVariant::EpochSecsVarint(_) => todo!(),
+            TimestampVariant::EpochMillisLE(_) => todo!(),
+            TimestampVariant::EpochMillisBE(_) => todo!(),
+            TimestampVariant::EpochMillisVarint(_) => todo!(),
+            TimestampVariant::EpochMicrosLE(_) => todo!(),
+            TimestampVariant::EpochMicrosBE(_) => todo!(),
+            TimestampVariant::EpochMicrosVarint(_) => todo!(),
+            TimestampVariant::EpochNanosLE(_) => todo!(),
+            TimestampVariant::EpochNanosBE(_) => todo!(),
+            TimestampVariant::EpochNanosVarint(_) => todo!(),
+            TimestampVariant::DOSTimeLE(_) => todo!(),
+            TimestampVariant::DOSTimeBE(_) => todo!(),
+        }
+    }
 }

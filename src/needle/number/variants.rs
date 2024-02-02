@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use integer_encoding::VarInt;
 
-use crate::needle::{Needle, Recombobulate};
+use crate::needle::{Interpret, Needle, Recombobulate};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum IntegerVariant {
@@ -48,119 +48,309 @@ impl IntegerVariant {
     /// 8 bit values
     ///
     pub fn as_u8(data: &[u8]) -> Result<(IntegerVariant, u8)> {
-        let i = u8::from_ne_bytes(data[0..1].try_into()?);
-        Ok((IntegerVariant::U8(data[0..1].to_owned()), i))
+        // let i = u8::from_ne_bytes(data[0..1].try_into()?);
+        // Ok((IntegerVariant::U8(data[0..1].to_owned()), i))
+
+        if !data.is_empty() {
+            let i = u8::from_ne_bytes(data[0..1].try_into()?);
+            Ok((IntegerVariant::U8(data[0..1].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::U8!"
+            ))
+        }
     }
 
     pub fn as_u8_varint(data: &[u8]) -> Result<(IntegerVariant, u8)> {
-        let (i, len) = u8::decode_var(data).unwrap();
-        Ok((IntegerVariant::U8Varint(data[0..len].to_owned()), i))
+        //let (i, len) = u8::decode_var(data).unwrap();
+        // Ok((IntegerVariant::U8Varint(data[0..len].to_owned()), i))
+
+        if let Some((i, len)) = u8::decode_var(data) {
+            Ok((IntegerVariant::U8Varint(data[0..len].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Failed to build IntegerVariant::U8Varint from bytes!"
+            ))
+        }
     }
 
     pub fn as_i8(data: &[u8]) -> Result<(IntegerVariant, i8)> {
-        let i = i8::from_ne_bytes(data[0..1].try_into()?);
-        Ok((IntegerVariant::I8(data[0..1].to_owned()), i))
+        // let i = i8::from_ne_bytes(data[0..1].try_into()?);
+        // Ok((IntegerVariant::I8(data[0..1].to_owned()), i))
+
+        if !data.is_empty() {
+            let i = i8::from_ne_bytes(data[0..1].try_into()?);
+            Ok((IntegerVariant::I8(data[0..1].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::I8!"
+            ))
+        }
     }
 
     pub fn as_i8_varint(data: &[u8]) -> Result<(IntegerVariant, i8)> {
-        let (i, len) = i8::decode_var(data).unwrap();
-        Ok((IntegerVariant::I8Varint(data[0..len].to_owned()), i))
+        // let (i, len) = i8::decode_var(data).unwrap();
+        // Ok((IntegerVariant::I8Varint(data[0..len].to_owned()), i))
+
+        if let Some((i, len)) = i8::decode_var(data) {
+            Ok((IntegerVariant::I8Varint(data[0..len].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Failed to build IntegerVariant::I8Varint from bytes!"
+            ))
+        }
     }
 
     /// 16 bit values
     ///
     pub fn as_u16_le(data: &[u8]) -> Result<(IntegerVariant, u16)> {
-        let i = u16::from_le_bytes(data[0..2].try_into()?);
-        Ok((IntegerVariant::U16LE(data[0..2].to_owned()), i))
+        // let i = u16::from_le_bytes(data[0..2].try_into()?);
+        // Ok((IntegerVariant::U16LE(data[0..2].to_owned()), i))
+
+        if data.len() >= 2 {
+            let i = u16::from_le_bytes(data[0..2].try_into()?);
+            Ok((IntegerVariant::U16LE(data[0..2].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::U16LE!"
+            ))
+        }
     }
 
     pub fn as_u16_be(data: &[u8]) -> Result<(IntegerVariant, u16)> {
-        let i = u16::from_be_bytes(data[0..2].try_into()?);
-        Ok((IntegerVariant::U16BE(data[0..2].to_owned()), i))
+        // let i = u16::from_be_bytes(data[0..2].try_into()?);
+        // Ok((IntegerVariant::U16BE(data[0..2].to_owned()), i))
+
+        if data.len() >= 2 {
+            let i = u16::from_be_bytes(data[0..2].try_into()?);
+            Ok((IntegerVariant::U16BE(data[0..2].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::U16BE!"
+            ))
+        }
     }
 
     pub fn as_u16_varint(data: &[u8]) -> Result<(IntegerVariant, u16)> {
-        let (i, len) = u16::decode_var(data).unwrap();
-        Ok((IntegerVariant::U16Varint(data[0..len].to_owned()), i))
+        // let (i, len) = u16::decode_var(data).unwrap();
+        // Ok((IntegerVariant::U16Varint(data[0..len].to_owned()), i))
+
+        if let Some((i, len)) = u16::decode_var(data) {
+            Ok((IntegerVariant::U16Varint(data[0..len].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Failed to build IntegerVariant::U16Varint from bytes!"
+            ))
+        }
     }
 
     pub fn as_i16_le(data: &[u8]) -> Result<(IntegerVariant, i16)> {
-        let i = i16::from_le_bytes(data[0..2].try_into()?);
-        Ok((IntegerVariant::I16LE(data[0..2].to_owned()), i))
+        // let i = i16::from_le_bytes(data[0..2].try_into()?);
+        // Ok((IntegerVariant::I16LE(data[0..2].to_owned()), i))
+
+        if data.len() >= 2 {
+            let i = i16::from_le_bytes(data[0..2].try_into()?);
+            Ok((IntegerVariant::I16LE(data[0..2].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::I16LE!"
+            ))
+        }
     }
 
     pub fn as_i16_be(data: &[u8]) -> Result<(IntegerVariant, i16)> {
-        let i = i16::from_be_bytes(data[0..2].try_into()?);
-        Ok((IntegerVariant::I16BE(data[0..2].to_owned()), i))
+        // let i = i16::from_be_bytes(data[0..2].try_into()?);
+        // Ok((IntegerVariant::I16BE(data[0..2].to_owned()), i))
+
+        if data.len() >= 2 {
+            let i = i16::from_be_bytes(data[0..2].try_into()?);
+            Ok((IntegerVariant::I16BE(data[0..2].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::I16BE!"
+            ))
+        }
     }
 
     pub fn as_i16_varint(data: &[u8]) -> Result<(IntegerVariant, i16)> {
-        let (i, len) = i16::decode_var(data).unwrap();
-        Ok((IntegerVariant::I16Varint(data[0..len].to_owned()), i))
+        // let (i, len) = i16::decode_var(data).unwrap();
+        // Ok((IntegerVariant::I16Varint(data[0..len].to_owned()), i))
+
+        if let Some((i, len)) = i16::decode_var(data) {
+            Ok((IntegerVariant::I16Varint(data[0..len].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Failed to build IntegerVariant::I16Varint from bytes!"
+            ))
+        }
     }
 
     /// 32 bit values
     ///
     pub fn as_u32_le(data: &[u8]) -> Result<(IntegerVariant, u32)> {
-        let i = u32::from_le_bytes(data[0..4].try_into()?);
-        Ok((IntegerVariant::U32LE(data[0..4].to_owned()), i))
+        // let i = u32::from_le_bytes(data[0..4].try_into()?);
+        // Ok((IntegerVariant::U32LE(data[0..4].to_owned()), i))
+
+        if data.len() >= 4 {
+            let i = u32::from_le_bytes(data[0..4].try_into()?);
+            Ok((IntegerVariant::U32LE(data[0..4].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::U32LE!"
+            ))
+        }
     }
 
     pub fn as_u32_be(data: &[u8]) -> Result<(IntegerVariant, u32)> {
-        let i = u32::from_be_bytes(data[0..4].try_into()?);
-        Ok((IntegerVariant::U32BE(data[0..4].to_owned()), i))
+        // let i = u32::from_be_bytes(data[0..4].try_into()?);
+        // Ok((IntegerVariant::U32BE(data[0..4].to_owned()), i))
+
+        if data.len() >= 4 {
+            let i = u32::from_be_bytes(data[0..4].try_into()?);
+            Ok((IntegerVariant::U32BE(data[0..4].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::U32BE!"
+            ))
+        }
     }
 
     pub fn as_u32_varint(data: &[u8]) -> Result<(IntegerVariant, u32)> {
-        let (i, len) = u32::decode_var(data).unwrap();
-        Ok((IntegerVariant::U32Varint(data[0..len].to_owned()), i))
+        // let (i, len) = u32::decode_var(data).unwrap();
+        // Ok((IntegerVariant::U32Varint(data[0..len].to_owned()), i))
+
+        if let Some((i, len)) = u32::decode_var(data) {
+            Ok((IntegerVariant::U32Varint(data[0..len].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Failed to build IntegerVariant::U32Varint from bytes!"
+            ))
+        }
     }
 
     pub fn as_i32_le(data: &[u8]) -> Result<(IntegerVariant, i32)> {
-        let i = i32::from_le_bytes(data[0..4].try_into()?);
-        Ok((IntegerVariant::I32LE(data[0..4].to_owned()), i))
+        // let i = i32::from_le_bytes(data[0..4].try_into()?);
+        // Ok((IntegerVariant::I32LE(data[0..4].to_owned()), i))
+
+        if data.len() >= 4 {
+            let i = i32::from_le_bytes(data[0..4].try_into()?);
+            Ok((IntegerVariant::I32LE(data[0..4].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::I32LE!"
+            ))
+        }
     }
 
     pub fn as_i32_be(data: &[u8]) -> Result<(IntegerVariant, i32)> {
-        let i = i32::from_be_bytes(data[0..4].try_into()?);
-        Ok((IntegerVariant::I32BE(data[0..4].to_owned()), i))
+        // let i = i32::from_be_bytes(data[0..4].try_into()?);
+        // Ok((IntegerVariant::I32BE(data[0..4].to_owned()), i))
+
+        if data.len() >= 4 {
+            let i = i32::from_be_bytes(data[0..4].try_into()?);
+            Ok((IntegerVariant::I32BE(data[0..4].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::I32BE!"
+            ))
+        }
     }
 
     pub fn as_i32_varint(data: &[u8]) -> Result<(IntegerVariant, i32)> {
-        let (i, len) = i32::decode_var(data).unwrap();
-        Ok((IntegerVariant::I32Varint(data[0..len].to_owned()), i))
+        // let (i, len) = i32::decode_var(data).unwrap();
+        // Ok((IntegerVariant::I32Varint(data[0..len].to_owned()), i))
+
+        if let Some((i, len)) = i32::decode_var(data) {
+            Ok((IntegerVariant::I32Varint(data[0..len].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Failed to build IntegerVariant::I32Varint from bytes!"
+            ))
+        }
     }
 
     /// 64 bit values
     ///
     pub fn as_u64_le(data: &[u8]) -> Result<(IntegerVariant, u64)> {
-        let i = u64::from_le_bytes(data[0..8].try_into()?);
-        Ok((IntegerVariant::U64LE(data[0..8].to_owned()), i))
+        // let i = u64::from_le_bytes(data[0..8].try_into()?);
+        // Ok((IntegerVariant::U64LE(data[0..8].to_owned()), i))
+
+        if data.len() >= 8 {
+            let i = u64::from_le_bytes(data[0..8].try_into()?);
+            Ok((IntegerVariant::U64LE(data[0..8].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::U64LE!"
+            ))
+        }
     }
 
     pub fn as_u64_be(data: &[u8]) -> Result<(IntegerVariant, u64)> {
-        let i = u64::from_be_bytes(data[0..8].try_into()?);
-        Ok((IntegerVariant::U64BE(data[0..8].to_owned()), i))
+        // let i = u64::from_be_bytes(data[0..8].try_into()?);
+        // Ok((IntegerVariant::U64BE(data[0..8].to_owned()), i))
+
+        if data.len() >= 8 {
+            let i = u64::from_be_bytes(data[0..8].try_into()?);
+            Ok((IntegerVariant::U64BE(data[0..8].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::U64BE!"
+            ))
+        }
     }
 
     pub fn as_u64_varint(data: &[u8]) -> Result<(IntegerVariant, u64)> {
-        let (i, len) = u64::decode_var(data).unwrap();
-        Ok((IntegerVariant::U64Varint(data[0..len].to_owned()), i))
+        // let (i, len) = u64::decode_var(data).unwrap();
+        // Ok((IntegerVariant::U64Varint(data[0..len].to_owned()), i))
+
+        if let Some((i, len)) = u64::decode_var(data) {
+            Ok((IntegerVariant::U64Varint(data[0..len].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Failed to build IntegerVariant::U64Varint from bytes!"
+            ))
+        }
     }
 
     pub fn as_i64_le(data: &[u8]) -> Result<(IntegerVariant, i64)> {
-        let i = i64::from_le_bytes(data[0..8].try_into()?);
-        Ok((IntegerVariant::I64LE(data[0..8].to_owned()), i))
+        // let i = i64::from_le_bytes(data[0..8].try_into()?);
+        // Ok((IntegerVariant::I64LE(data[0..8].to_owned()), i))
+
+        if data.len() >= 8 {
+            let i = i64::from_le_bytes(data[0..8].try_into()?);
+            Ok((IntegerVariant::I64LE(data[0..8].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::I64LE!"
+            ))
+        }
     }
 
     pub fn as_i64_be(data: &[u8]) -> Result<(IntegerVariant, i64)> {
-        let i = i64::from_be_bytes(data[0..8].try_into()?);
-        Ok((IntegerVariant::I64BE(data[0..8].to_owned()), i))
+        // let i = i64::from_be_bytes(data[0..8].try_into()?);
+        // Ok((IntegerVariant::I64BE(data[0..8].to_owned()), i))
+
+        if data.len() >= 8 {
+            let i = i64::from_be_bytes(data[0..8].try_into()?);
+            Ok((IntegerVariant::I64BE(data[0..8].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::I64BE!"
+            ))
+        }
     }
 
     pub fn as_i64_varint(data: &[u8]) -> Result<(IntegerVariant, i64)> {
-        let (i, len) = i64::decode_var(data).unwrap();
-        Ok((IntegerVariant::I64Varint(data[0..len].to_owned()), i))
+        // let (i, len) = i64::decode_var(data).unwrap();
+        // Ok((IntegerVariant::I64Varint(data[0..len].to_owned()), i))
+
+        if let Some((i, len)) = i64::decode_var(data) {
+            Ok((IntegerVariant::I64Varint(data[0..len].to_owned()), i))
+        } else {
+            Err(anyhow!(
+                "Failed to build IntegerVariant::I64Varint from bytes!"
+            ))
+        }
     }
 
     pub fn byte_sequence(&self) -> &[u8] {
@@ -528,6 +718,111 @@ impl Recombobulate for IntegerVariant {
     }
 }
 
+impl Interpret for IntegerVariant {
+    fn interpret(data: &[u8]) -> Result<Vec<Self>>
+    where
+        Self: std::marker::Sized,
+    {
+        let mut intepretations = Vec::<Self>::new();
+
+        // 8 bit values
+        //
+        if let Ok((v, _)) = IntegerVariant::as_u8(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_u8_varint(data) {
+            intepretations.push(v);
+        }
+
+        // 16 bit values
+        //
+        if let Ok((v, _)) = IntegerVariant::as_u16_le(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_u16_be(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_u16_varint(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_i16_le(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_i16_be(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_i16_varint(data) {
+            intepretations.push(v);
+        }
+
+        // 32 bit values
+        //
+        if let Ok((v, _)) = IntegerVariant::as_u32_le(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_u32_be(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_u32_varint(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_i32_le(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_i32_be(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_i32_varint(data) {
+            intepretations.push(v);
+        }
+
+        // 64 bit values
+        //
+        if let Ok((v, _)) = IntegerVariant::as_u64_le(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_u64_be(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_u64_varint(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_i64_le(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_i64_be(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = IntegerVariant::as_i64_varint(data) {
+            intepretations.push(v);
+        }
+
+        if intepretations.is_empty() {
+            Err(anyhow!(
+                "Failed to interpret bytes as any valid IntegerVariant!"
+            ))
+        } else {
+            Ok(intepretations)
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum FloatVariant {
     // f32
@@ -641,6 +936,43 @@ impl Recombobulate for FloatVariant {
     }
 }
 
+impl Interpret for FloatVariant {
+    fn interpret(data: &[u8]) -> Result<Vec<Self>>
+    where
+        Self: std::marker::Sized,
+    {
+        let mut intepretations = Vec::<Self>::new();
+
+        // 32 bit values
+        //
+        if let Ok((v, _)) = FloatVariant::as_f32_le(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = FloatVariant::as_f32_be(data) {
+            intepretations.push(v);
+        }
+
+        // 64 bit values
+        //
+        if let Ok((v, _)) = FloatVariant::as_f64_le(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok((v, _)) = FloatVariant::as_f64_be(data) {
+            intepretations.push(v);
+        }
+
+        if intepretations.is_empty() {
+            Err(anyhow!(
+                "Failed to interpret bytes as any valid FloatVariant!"
+            ))
+        } else {
+            Ok(intepretations)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -649,6 +981,20 @@ mod tests {
     use crate::needle::{variant::NeedleVariant, Discombobulate};
 
     use super::*;
+
+    #[test]
+    fn integer_variants() {
+        let data = vec![0xffu8]; // Not a valid u8 varint
+        let r = IntegerVariant::as_u8_varint(&data);
+        assert!(r.is_err());
+
+        let data = vec![0x20u8]; // A valid u8 varint
+        let r = IntegerVariant::as_u8_varint(&data);
+        assert!(r.is_ok());
+        assert_eq!(r.unwrap().1, 32);
+    }
+
+    // TODO: add comprehensive tests for valid and invalid variants for both Integer and Float
 
     #[test]
     fn integer_recombobulation() {
@@ -667,6 +1013,8 @@ mod tests {
         // -20
         let needle = Needle::new_integer(-20).unwrap();
         let needle_variants = needle.discombobulate();
+
+        //println!("{:?}", &needle_variants);
 
         for needle_variant in &needle_variants {
             if let NeedleVariant::Integer(integer_variant) = needle_variant {
@@ -714,6 +1062,15 @@ mod tests {
     }
 
     #[test]
+    fn integer_interpretaion() {
+        let data = vec![236u8, 255, 255, 255];
+
+        if let Ok(interps) = IntegerVariant::interpret(&data) {
+            println!("{:?}", interps);
+        }
+    }
+
+    #[test]
     fn float_recombobulation() {
         // PI
         let needle = Needle::new_float(PI).unwrap();
@@ -727,6 +1084,16 @@ mod tests {
                 println!("{:?} -> {:?} -> {:?}", &needle, &float_variant, &recom);
                 assert_eq!(recom, needle);
             }
+        }
+    }
+
+    #[test]
+    fn float_interpretaion() {
+        // PI
+        let data = vec![64u8, 9, 33, 251, 84, 68, 45, 24];
+
+        if let Ok(interps) = FloatVariant::interpret(&data) {
+            println!("{:?}", interps);
         }
     }
 

@@ -20,7 +20,7 @@ impl NeedleVariant {
     pub fn byte_sequence(&self) -> &[u8] {
         match self {
             NeedleVariant::Integer(v) => v.byte_sequence(),
-            NeedleVariant::Float(v) => todo!(),
+            NeedleVariant::Float(v) => v.byte_sequence(),
             NeedleVariant::Timestamp(v) => todo!(),
             NeedleVariant::Location(v) => todo!(),
         }
@@ -32,7 +32,7 @@ impl Recombobulate for NeedleVariant {
         match self {
             NeedleVariant::Integer(integer_variant) => integer_variant.recombobulate(),
             NeedleVariant::Float(float_variant) => float_variant.recombobulate(),
-            NeedleVariant::Timestamp(_) => todo!(),
+            NeedleVariant::Timestamp(timestamp_variant) => timestamp_variant.recombobulate(),
             NeedleVariant::Location(_) => todo!(),
         }
     }

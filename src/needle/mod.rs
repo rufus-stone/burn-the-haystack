@@ -5,10 +5,10 @@ pub mod number;
 pub mod timestamp;
 pub mod variant;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use time::{format_description, Duration, PrimitiveDateTime};
 
-use self::{timestamp::Timestamp, variant::NeedleVariant};
+use self::{number::variants::IntegerVariant, timestamp::Timestamp, variant::NeedleVariant};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Needle {
@@ -76,8 +76,8 @@ pub trait Matches {
     fn matches(&self, rhs: &Self) -> bool;
 }
 
-impl Needle {
-    pub fn matches(&self, rhs: &Needle) -> bool {
+impl Matches for Needle {
+    fn matches(&self, rhs: &Needle) -> bool {
         match (&self, &rhs) {
             (Needle::Timestamp(lhs), Needle::Timestamp(rhs)) => lhs.matches(rhs),
             (Needle::Location(lhs), Needle::Location(rhs)) => lhs.matches(rhs),
@@ -116,12 +116,39 @@ pub trait Recombobulate {
     fn recombobulate(&self) -> Result<Needle>;
 }
 
+/// Trait for generating all possible valid interpretations from a byte sequence
+pub trait Interpret {
+    fn interpret(data: &[u8]) -> Result<Vec<Self>>
+    where
+        Self: std::marker::Sized;
+}
+
+impl Interpret for Needle {
+    fn interpret(data: &[u8]) -> Result<Vec<Self>>
+    where
+        Self: std::marker::Sized,
+    {
+        let needles = Vec::<Needle>::new();
+
+        // First, try interpreting as IntegerVariant
+        let interger_interpretations = IntegerVariant::interpret(data);
+
+        if needles.is_empty() {
+            Err(anyhow!("Failed to interpret bytes as any valid Needles!"))
+        } else {
+            Ok(needles)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
     use time::Duration;
 
-    use crate::needle::{location::Location, number::*, Discombobulate, Needle};
+    use crate::needle::{location::Location, number::*, Discombobulate, Matches, Needle};
+
+    use super::Interpret;
 
     #[test]
     fn new_timestamps() {
@@ -289,5 +316,14 @@ mod tests {
         }
 
         assert_eq!(1, 1);
+    }
+
+    #[test]
+    fn interpret_integer() {
+        let data = vec![0xf0u8, 0x01];
+
+        if let Ok(interpretations) = Needle::interpret(&data) {
+            println!("{:?}", &interpretations);
+        }
     }
 }

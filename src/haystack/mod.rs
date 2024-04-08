@@ -1,6 +1,11 @@
 use itertools::Itertools;
 
-use crate::needle::{Discombobulate, Needle};
+use crate::needle::{
+    number::variants::{FloatVariant, IntegerVariant},
+    timestamp::variants::TimestampVariant,
+    variant::NeedleVariant,
+    Discombobulate, Interpret, Matches, Needle, Recombobulate,
+};
 
 use self::ashes::Ashes;
 
@@ -26,33 +31,108 @@ impl Haystack {
     pub fn burn(&self) -> Vec<Ashes> {
         let mut ash_pile = Vec::<Ashes>::new();
 
-        for needle in &self.needles {
-            let needle_variants = needle.discombobulate();
+        // TODO - should we just auto-discombobulate all needles on creation?
+        // let target_needle_variants = self
+        //     .needles
+        //     .iter()
+        //     .flat_map(|needle| needle.discombobulate())
+        //     .collect_vec();
 
-            // for needle_variant in needle_variants {
-            //     let byte_sequence = needle_variant.byte_sequence();
-            //     let r = self
-            //         .data
-            //         .as_slice()
-            //         .windows(byte_sequence.len())
-            //         .positions(|window| {
-            //             // Need to turn bytes back into variants and back into needles, then needle.match()
-            //         });
-            // }
+        for i in 0..self.data.len() {
+            let window = &self.data.as_slice()[i..];
+            //println!("Window: {:02x?}", &self.data.as_slice()[i..]);
 
-            // for (byte_sequence, name) in needlets {
-            //     // TODO: Need to convert the window under investigation into the appropriate Needle type for comparison
+            // Try to interpret the bytes as all known variants
 
-            //     let mut hits = self
-            //         .data
-            //         .as_slice()
-            //         .windows(byte_sequence.len())
-            //         .positions(|window| window == byte_sequence) // TODO: Change this to fuzzy match based on needle tolerances
-            //         .map(|p| Ashes::new(needle, p, name.clone(), byte_sequence.clone()))
-            //         .collect_vec();
+            // Integer
+            if let Ok(variants) = IntegerVariant::interpret(window) {
+                for variant in &variants {
+                    //println!("{:?}", &variant);
 
-            //     ash_pile.append(&mut hits);
-            // }
+                    if let Ok(needle) = variant.recombobulate() {
+                        //println!("{:?}", &needle);
+
+                        let hits = self
+                            .needles
+                            .iter()
+                            .filter(|target| needle.matches(target))
+                            .map(|target| {
+                                //println!("It's a match!");
+                                Ashes::new(
+                                    target,
+                                    needle.clone(),
+                                    NeedleVariant::Integer(variant.clone()),
+                                    i,
+                                )
+                            })
+                            .collect_vec();
+
+                        for hit in hits {
+                            ash_pile.push(hit);
+                        }
+                    }
+                }
+            }
+
+            // Float
+            if let Ok(variants) = FloatVariant::interpret(window) {
+                for variant in &variants {
+                    //println!("{:?}", &variant);
+
+                    if let Ok(needle) = variant.recombobulate() {
+                        //println!("{:?}", &needle);
+
+                        let hits = self
+                            .needles
+                            .iter()
+                            .filter(|target| needle.matches(target))
+                            .map(|target| {
+                                //println!("It's a match!");
+                                Ashes::new(
+                                    target,
+                                    needle.clone(),
+                                    NeedleVariant::Float(variant.clone()),
+                                    i,
+                                )
+                            })
+                            .collect_vec();
+
+                        for hit in hits {
+                            ash_pile.push(hit);
+                        }
+                    }
+                }
+            }
+
+            // Timestamp
+            if let Ok(variants) = TimestampVariant::interpret(window) {
+                for variant in &variants {
+                    //println!("{:?}", &variant);
+
+                    if let Ok(needle) = variant.recombobulate() {
+                        //println!("{:?}", &needle);
+
+                        let hits = self
+                            .needles
+                            .iter()
+                            .filter(|target| needle.matches(target))
+                            .map(|target| {
+                                //println!("It's a match!");
+                                Ashes::new(
+                                    target,
+                                    needle.clone(),
+                                    NeedleVariant::Timestamp(variant.clone()),
+                                    i,
+                                )
+                            })
+                            .collect_vec();
+
+                        for hit in hits {
+                            ash_pile.push(hit);
+                        }
+                    }
+                }
+            }
         }
 
         ash_pile
@@ -63,7 +143,7 @@ impl Haystack {
 mod tests {
     use time::{macros::datetime, Duration};
 
-    use crate::needle::timestamp::Timestamp;
+    use crate::needle::{number::Integer, timestamp::Timestamp};
 
     use super::*;
 
@@ -76,31 +156,36 @@ mod tests {
         assert!(haystack.needles.is_empty());
     }
 
-    // #[test]
-    // fn bytes_needles_test() {
-    //     let data: Vec<u8> = vec![
-    //         0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe, 0x01, 0x02, 0x03, 0x04, 0xca, 0xfe,
-    //         0xca, 0xfe, 0xba, 0xbe, 0xc0, 0x01, 0xd0, 0x0d,
-    //     ];
+    #[test]
+    fn integer_needles_test() {
+        // First 16 bytes of a ZIP file which contains a DOS timestamp
+        let data: Vec<u8> = vec![
+            0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x08, 0x00, 0x08, 0x00, 0x8e, 0x72, 0x22, 0x58,
+            0x00, 0x00,
+        ];
 
-    //     let cafe: &[u8] = &[0xca, 0xfe];
-    //     let cafebabe: &[u8] = &[0xca, 0xfe, 0xba, 0xbe];
-    //     let notreal: &[u8] = &[0xaa, 0xbb, 0xcc, 0xdd];
+        let n1 = Integer::new(12345);
+        let n2 = Integer::with_tolerance(-100, 3);
+        let actual = Integer::with_tolerance(2389844560, 8);
 
-    //     let needles = vec![
-    //         Needle::Bytes(cafe.to_vec()),
-    //         Needle::Bytes(cafebabe.to_vec()),
-    //         Needle::Bytes(notreal.to_vec()),
-    //     ];
+        let needles = vec![
+            Needle::Integer(n1),
+            Needle::Integer(n2),
+            Needle::Integer(actual),
+        ];
 
-    //     let haystack = Haystack::with_needles(data, needles);
+        let haystack = Haystack::with_needles(data, needles);
 
-    //     let ash_pile = haystack.burn();
+        let ashes = haystack.burn();
 
-    //     println!("Burnt the haystack");
-
-    //     println!("{:02x?}", ash_pile);
-    // }
+        for ash in &ashes {
+            println!("[ Target needle found ]");
+            println!("Target  : {:?}", ash.target);
+            println!("Actual  : {:?}", ash.actual);
+            println!("Variant : {:02x?}", ash.variant);
+            println!("Offset  : {}", ash.offset);
+        }
+    }
 
     #[test]
     fn timestamp_needles_test() {
@@ -122,7 +207,15 @@ mod tests {
 
         let haystack = Haystack::with_needles(data, needles);
 
-        let results = haystack.burn();
+        let ashes = haystack.burn();
+
+        for ash in &ashes {
+            println!("[ Target needle found ]");
+            println!("Target  : {:?}", ash.target);
+            println!("Actual  : {:?}", ash.actual);
+            println!("Variant : {:02x?}", ash.variant);
+            println!("Offset  : {}", ash.offset);
+        }
     }
 
     #[test]

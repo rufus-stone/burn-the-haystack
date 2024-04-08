@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 
-use crate::needle::{number::variants::IntegerVariant, Needle, Recombobulate};
+use crate::needle::{number::variants::IntegerVariant, Interpret, Needle, Recombobulate};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TimestampVariant {
@@ -52,6 +52,23 @@ impl Recombobulate for TimestampVariant {
             TimestampVariant::EpochNanosVarint(_) => todo!(),
             TimestampVariant::DOSTimeLE(_) => todo!(),
             TimestampVariant::DOSTimeBE(_) => todo!(),
+        }
+    }
+}
+
+impl Interpret for TimestampVariant {
+    fn interpret(data: &[u8]) -> Result<Vec<Self>>
+    where
+        Self: std::marker::Sized,
+    {
+        let mut intepretations = Vec::<Self>::new();
+
+        if intepretations.is_empty() {
+            Err(anyhow!(
+                "Failed to interpret bytes as any valid TimestampVariant!"
+            ))
+        } else {
+            Ok(intepretations)
         }
     }
 }

@@ -8,9 +8,13 @@ pub mod variant;
 use anyhow::{anyhow, Result};
 use time::{format_description, Duration, PrimitiveDateTime};
 
-use self::{number::variants::IntegerVariant, timestamp::Timestamp, variant::NeedleVariant};
+use self::{
+    number::variants::{FloatVariant, IntegerVariant},
+    timestamp::{variants::TimestampVariant, Timestamp},
+    variant::NeedleVariant,
+};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum Needle {
     Bytes(Vec<u8>),
     Integer(number::Integer),
@@ -128,14 +132,43 @@ impl Interpret for Needle {
     where
         Self: std::marker::Sized,
     {
-        let needles = Vec::<Needle>::new();
+        let mut needles = Vec::<Needle>::new();
 
-        // First, try interpreting as IntegerVariant
-        let interger_interpretations = IntegerVariant::interpret(data);
+        // Try all valid IntegerVariant interpretations
+        if let Ok(integer_variants) = IntegerVariant::interpret(data) {
+            for variant in &integer_variants {
+                if let Ok(needle) = variant.recombobulate() {
+                    println!("{:02x?} -> {:?}", &variant, &needle);
+                    needles.push(needle);
+                }
+            }
+        }
+
+        // Try all valid FloatVariant interpretations
+        if let Ok(float_variants) = FloatVariant::interpret(data) {
+            for variant in &float_variants {
+                if let Ok(needle) = variant.recombobulate() {
+                    println!("{:02x?} -> {:?}", &variant, &needle);
+                    needles.push(needle);
+                }
+            }
+        }
+
+        // Try all valid TimestampVariant interpretations
+        if let Ok(timestamp_variants) = TimestampVariant::interpret(data) {
+            for variant in &timestamp_variants {
+                if let Ok(needle) = variant.recombobulate() {
+                    println!("{:02x?} -> {:?}", &variant, &needle);
+                    needles.push(needle);
+                }
+            }
+        }
 
         if needles.is_empty() {
             Err(anyhow!("Failed to interpret bytes as any valid Needles!"))
         } else {
+            needles.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            needles.dedup();
             Ok(needles)
         }
     }
@@ -320,10 +353,10 @@ mod tests {
 
     #[test]
     fn interpret_integer() {
-        let data = vec![0xf0u8, 0x01];
+        let data = vec![0xf0u8, 0x01, 0x00, 0x00];
 
         if let Ok(interpretations) = Needle::interpret(&data) {
-            println!("{:?}", &interpretations);
+            println!("{:#?}", &interpretations);
         }
     }
 }

@@ -2,17 +2,19 @@ use crate::needle::{variant::NeedleVariant, Needle};
 
 #[derive(Debug)]
 pub struct Ashes<'a> {
-    pub needle: &'a Needle,
-    pub needle_variant: NeedleVariant,
-    pub pos: usize,
+    pub target: &'a Needle,
+    pub actual: Needle,
+    pub variant: NeedleVariant,
+    pub offset: usize,
 }
 
 impl<'a> Ashes<'a> {
-    pub fn new(needle: &'a Needle, needle_variant: NeedleVariant, pos: usize) -> Self {
+    pub fn new(target: &'a Needle, actual: Needle, variant: NeedleVariant, offset: usize) -> Self {
         Self {
-            needle,
-            needle_variant,
-            pos,
+            target,
+            actual,
+            variant,
+            offset,
         }
     }
 }

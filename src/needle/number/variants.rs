@@ -838,25 +838,61 @@ impl FloatVariant {
     /// 32 bit values
     ///
     pub fn as_f32_le(data: &[u8]) -> Result<(FloatVariant, f32)> {
-        let f = f32::from_le_bytes(data[0..4].try_into()?);
-        Ok((FloatVariant::F32LE(data[0..4].to_owned()), f))
+        // let f = f32::from_le_bytes(data[0..4].try_into()?);
+        // Ok((FloatVariant::F32LE(data[0..4].to_owned()), f))
+
+        if data.len() >= 4 {
+            let f = f32::from_le_bytes(data[0..4].try_into()?);
+            Ok((FloatVariant::F32LE(data[0..4].to_owned()), f))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a FloatVariant::F32LE!"
+            ))
+        }
     }
 
     pub fn as_f32_be(data: &[u8]) -> Result<(FloatVariant, f32)> {
-        let f = f32::from_be_bytes(data[0..4].try_into()?);
-        Ok((FloatVariant::F32BE(data[0..4].to_owned()), f))
+        // let f = f32::from_be_bytes(data[0..4].try_into()?);
+        // Ok((FloatVariant::F32BE(data[0..4].to_owned()), f))
+
+        if data.len() >= 4 {
+            let f = f32::from_be_bytes(data[0..4].try_into()?);
+            Ok((FloatVariant::F32BE(data[0..4].to_owned()), f))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a FloatVariant::F32BE!"
+            ))
+        }
     }
 
     /// 64 bit values
     ///
     pub fn as_f64_le(data: &[u8]) -> Result<(FloatVariant, f64)> {
-        let f = f64::from_le_bytes(data[0..8].try_into()?);
-        Ok((FloatVariant::F64LE(data[0..8].to_owned()), f))
+        // let f = f64::from_le_bytes(data[0..8].try_into()?);
+        // Ok((FloatVariant::F64LE(data[0..8].to_owned()), f))
+
+        if data.len() >= 8 {
+            let f = f64::from_le_bytes(data[0..8].try_into()?);
+            Ok((FloatVariant::F64LE(data[0..8].to_owned()), f))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a FloatVariant::F64LE!"
+            ))
+        }
     }
 
     pub fn as_f64_be(data: &[u8]) -> Result<(FloatVariant, f64)> {
-        let f = f64::from_be_bytes(data[0..8].try_into()?);
-        Ok((FloatVariant::F64BE(data[0..8].to_owned()), f))
+        // let f = f64::from_be_bytes(data[0..8].try_into()?);
+        // Ok((FloatVariant::F64BE(data[0..8].to_owned()), f))
+
+        if data.len() >= 8 {
+            let f = f64::from_be_bytes(data[0..8].try_into()?);
+            Ok((FloatVariant::F64BE(data[0..8].to_owned()), f))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a FloatVariant::F64BE!"
+            ))
+        }
     }
 
     pub fn byte_sequence(&self) -> &[u8] {
@@ -978,7 +1014,7 @@ mod tests {
 
     use std::f64::consts::PI;
 
-    use crate::needle::{variant::NeedleVariant, Discombobulate};
+    use crate::needle::{variant::NeedleVariant, Discombobulate, Matches};
 
     use super::*;
 
@@ -1065,8 +1101,20 @@ mod tests {
     fn integer_interpretaion() {
         let data = vec![236u8, 255, 255, 255];
 
+        let target = Needle::new_integer(-20).unwrap();
+
         if let Ok(interps) = IntegerVariant::interpret(&data) {
-            println!("{:?}", interps);
+            for integer_variant in &interps {
+                println!("{:?}", &integer_variant);
+
+                if let Ok(integer) = integer_variant.recombobulate() {
+                    println!("{:?}", &integer);
+
+                    if integer.matches(&target) {
+                        println!("It's a match!");
+                    }
+                }
+            }
         }
     }
 

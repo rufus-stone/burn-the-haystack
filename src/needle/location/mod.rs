@@ -13,6 +13,17 @@ pub struct Location {
     tolerance: Option<Distance>,
 }
 
+// TODO: Fix this so it compares points better
+impl PartialOrd for Location {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match self.value.x().partial_cmp(&other.value.x()) {
+            Some(core::cmp::Ordering::Equal) => {}
+            ord => return ord,
+        }
+        self.tolerance.partial_cmp(&other.tolerance)
+    }
+}
+
 impl Location {
     pub fn new(lat: f64, lon: f64) -> Option<Self> {
         if !(-90.0..=90.0).contains(&lat) || !(-180.0..=180.0).contains(&lon) {

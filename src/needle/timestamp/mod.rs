@@ -28,7 +28,7 @@ pub fn u8_to_month(value: u8) -> Option<Month> {
 }
 
 //#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct Timestamp {
     pub value: PrimitiveDateTime,
     pub tolerance: Option<Duration>,

@@ -12,10 +12,10 @@ impl Discombobulate for u8 {
         let mut variants = Vec::<NeedleVariant>::new();
 
         let le_bytes = self.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(U8(le_bytes)));
+        variants.push(NeedleVariant::Integer(U8((le_bytes, *self))));
 
         let varint = self.encode_var_vec();
-        variants.push(NeedleVariant::Integer(U8Varint(varint)));
+        variants.push(NeedleVariant::Integer(U8Varint((varint, *self))));
 
         variants
     }
@@ -26,10 +26,10 @@ impl Discombobulate for i8 {
         let mut variants = Vec::<NeedleVariant>::new();
 
         let le_bytes = self.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(I8(le_bytes)));
+        variants.push(NeedleVariant::Integer(I8((le_bytes, *self))));
 
         let varint = self.encode_var_vec();
-        variants.push(NeedleVariant::Integer(I8Varint(varint)));
+        variants.push(NeedleVariant::Integer(I8Varint((varint, *self))));
 
         variants
     }
@@ -40,13 +40,13 @@ impl Discombobulate for u16 {
         let mut variants = Vec::<NeedleVariant>::new();
 
         let le_bytes = self.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(U16LE(le_bytes)));
+        variants.push(NeedleVariant::Integer(U16LE((le_bytes, *self))));
 
         let be_bytes = self.to_be_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(U16BE(be_bytes)));
+        variants.push(NeedleVariant::Integer(U16BE((be_bytes, *self))));
 
         let varint = self.encode_var_vec();
-        variants.push(NeedleVariant::Integer(U16Varint(varint)));
+        variants.push(NeedleVariant::Integer(U16Varint((varint, *self))));
 
         variants
     }
@@ -57,13 +57,13 @@ impl Discombobulate for i16 {
         let mut variants = Vec::<NeedleVariant>::new();
 
         let le_bytes = self.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(I16LE(le_bytes)));
+        variants.push(NeedleVariant::Integer(I16LE((le_bytes, *self))));
 
         let be_bytes = self.to_be_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(I16BE(be_bytes)));
+        variants.push(NeedleVariant::Integer(I16BE((be_bytes, *self))));
 
         let varint = self.encode_var_vec();
-        variants.push(NeedleVariant::Integer(I16Varint(varint)));
+        variants.push(NeedleVariant::Integer(I16Varint((varint, *self))));
 
         variants
     }
@@ -74,13 +74,13 @@ impl Discombobulate for u32 {
         let mut variants = Vec::<NeedleVariant>::new();
 
         let le_bytes = self.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(U32LE(le_bytes)));
+        variants.push(NeedleVariant::Integer(U32LE((le_bytes, *self))));
 
         let be_bytes = self.to_be_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(U32BE(be_bytes)));
+        variants.push(NeedleVariant::Integer(U32BE((be_bytes, *self))));
 
         let varint = self.encode_var_vec();
-        variants.push(NeedleVariant::Integer(U32Varint(varint)));
+        variants.push(NeedleVariant::Integer(U32Varint((varint, *self))));
 
         variants
     }
@@ -91,13 +91,13 @@ impl Discombobulate for i32 {
         let mut variants = Vec::<NeedleVariant>::new();
 
         let le_bytes = self.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(I32LE(le_bytes)));
+        variants.push(NeedleVariant::Integer(I32LE((le_bytes, *self))));
 
         let be_bytes = self.to_be_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(I32BE(be_bytes)));
+        variants.push(NeedleVariant::Integer(I32BE((be_bytes, *self))));
 
         let varint = self.encode_var_vec();
-        variants.push(NeedleVariant::Integer(I32Varint(varint)));
+        variants.push(NeedleVariant::Integer(I32Varint((varint, *self))));
 
         variants
     }
@@ -108,13 +108,13 @@ impl Discombobulate for u64 {
         let mut variants = Vec::<NeedleVariant>::new();
 
         let le_bytes = self.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(U64LE(le_bytes)));
+        variants.push(NeedleVariant::Integer(U64LE((le_bytes, *self))));
 
         let be_bytes = self.to_be_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(U64BE(be_bytes)));
+        variants.push(NeedleVariant::Integer(U64BE((be_bytes, *self))));
 
         let varint = self.encode_var_vec();
-        variants.push(NeedleVariant::Integer(U64Varint(varint)));
+        variants.push(NeedleVariant::Integer(U64Varint((varint, *self))));
 
         variants
     }
@@ -125,13 +125,13 @@ impl Discombobulate for i64 {
         let mut variants = Vec::<NeedleVariant>::new();
 
         let le_bytes = self.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(I64LE(le_bytes)));
+        variants.push(NeedleVariant::Integer(I64LE((le_bytes, *self))));
 
         let be_bytes = self.to_be_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Integer(I64BE(be_bytes)));
+        variants.push(NeedleVariant::Integer(I64BE((be_bytes, *self))));
 
         let varint = self.encode_var_vec();
-        variants.push(NeedleVariant::Integer(I64Varint(varint)));
+        variants.push(NeedleVariant::Integer(I64Varint((varint, *self))));
 
         variants
     }

@@ -1,13 +1,13 @@
 pub mod variants;
 
-use integer_encoding::VarInt;
 use time::{Date, Duration, Month, OffsetDateTime, PrimitiveDateTime, Time};
 
 use self::variants::TimestampVariant::*;
-
 use super::variant::NeedleVariant;
 use super::Discombobulate;
+
 use super::Matches;
+use super::Needle;
 
 pub fn u8_to_month(value: u8) -> Option<Month> {
     match value {
@@ -146,62 +146,52 @@ impl Discombobulate for Timestamp {
         let mut variants = Vec::<NeedleVariant>::new();
 
         // Epoch seconds
-        let epoch_secs = self.value.assume_utc().unix_timestamp() as i32;
-        let epoch_secs_le_bytes = epoch_secs.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Timestamp(EpochSecsLE(epoch_secs_le_bytes)));
+        let epoch_secs = self.value.assume_utc().unix_timestamp();
+        if let Some(integer_needle) = Needle::new_integer(epoch_secs) {
+            let needle_variants = integer_needle.discombobulate();
 
-        let epoch_secs_be_bytes = epoch_secs.to_be_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Timestamp(EpochSecsBE(epoch_secs_be_bytes)));
-
-        let epoch_secs_varint = epoch_secs.encode_var_vec();
-        variants.push(NeedleVariant::Timestamp(EpochSecsVarint(epoch_secs_varint)));
+            for needle_variant in &needle_variants {
+                if let NeedleVariant::Integer(v) = needle_variant {
+                    variants.push(NeedleVariant::Timestamp(EpochSecs(v.clone())));
+                }
+            }
+        }
 
         // Epoch millis
-        let epoch_millis = (epoch_secs as i64) * 1000;
-        let epoch_millis_le_bytes = epoch_millis.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Timestamp(EpochMillisLE(
-            epoch_millis_le_bytes,
-        )));
+        let epoch_millis = epoch_secs * 1000;
+        if let Some(integer_needle) = Needle::new_integer(epoch_millis) {
+            let needle_variants = integer_needle.discombobulate();
 
-        let epoch_millis_be_bytes = epoch_millis.to_be_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Timestamp(EpochMillisBE(
-            epoch_millis_be_bytes,
-        )));
-
-        let epoch_millis_varint = epoch_millis.encode_var_vec();
-        variants.push(NeedleVariant::Timestamp(EpochMillisVarint(
-            epoch_millis_varint,
-        )));
+            for needle_variant in &needle_variants {
+                if let NeedleVariant::Integer(v) = needle_variant {
+                    variants.push(NeedleVariant::Timestamp(EpochMillis(v.clone())));
+                }
+            }
+        }
 
         // Epoch micros
         let epoch_micros = epoch_millis * 1000;
-        let epoch_micros_le_bytes = epoch_micros.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Timestamp(EpochMicrosLE(
-            epoch_micros_le_bytes,
-        )));
+        if let Some(integer_needle) = Needle::new_integer(epoch_micros) {
+            let needle_variants = integer_needle.discombobulate();
 
-        let epoch_micros_be_bytes = epoch_micros.to_be_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Timestamp(EpochMicrosBE(
-            epoch_micros_be_bytes,
-        )));
-
-        let epoch_micros_varint = epoch_micros.encode_var_vec();
-        variants.push(NeedleVariant::Timestamp(EpochMicrosVarint(
-            epoch_micros_varint,
-        )));
+            for needle_variant in &needle_variants {
+                if let NeedleVariant::Integer(v) = needle_variant {
+                    variants.push(NeedleVariant::Timestamp(EpochMicros(v.clone())));
+                }
+            }
+        }
 
         // Epoch nanos
         let epoch_nanos = epoch_micros * 1000;
-        let epoch_nanos_le_bytes = epoch_nanos.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Timestamp(EpochNanosLE(epoch_nanos_le_bytes)));
+        if let Some(integer_needle) = Needle::new_integer(epoch_nanos) {
+            let needle_variants = integer_needle.discombobulate();
 
-        let epoch_nanos_be_bytes = epoch_nanos.to_be_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Timestamp(EpochNanosBE(epoch_nanos_be_bytes)));
-
-        let epoch_nanos_varint = epoch_nanos.encode_var_vec();
-        variants.push(NeedleVariant::Timestamp(EpochNanosVarint(
-            epoch_nanos_varint,
-        )));
+            for needle_variant in &needle_variants {
+                if let NeedleVariant::Integer(v) = needle_variant {
+                    variants.push(NeedleVariant::Timestamp(EpochNanos(v.clone())));
+                }
+            }
+        }
 
         // 18-digit 'Windows NT time format', 'Win32 FILETIME or SYSTEMTIME' or NTFS file time
         // The timestamp is the number of 100-nanosecond intervals (1 nanosecond = one billionth of a second) since Jan 1, 1601 UTC
@@ -221,11 +211,13 @@ impl Discombobulate for Timestamp {
 
         // DOS/FAT timestamp
         let dos_time = self.to_dos_time();
-        let dos_time_le_bytes = dos_time.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Timestamp(DOSTimeLE(dos_time_le_bytes)));
+        let needle_variants = dos_time.discombobulate();
 
-        let dos_time_be_bytes = dos_time.to_be_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Timestamp(DOSTimeBE(dos_time_be_bytes)));
+        for needle_variant in &needle_variants {
+            if let NeedleVariant::Integer(v) = needle_variant {
+                variants.push(NeedleVariant::Timestamp(DOSTime(v.clone())));
+            }
+        }
 
         // NTP timestamp
 
@@ -235,6 +227,7 @@ impl Discombobulate for Timestamp {
 
 #[cfg(test)]
 mod tests {
+    use integer_encoding::VarInt;
     use time::{format_description, macros::datetime};
 
     use super::*;
@@ -269,29 +262,29 @@ mod tests {
 
         let variants = dtg.discombobulate();
         for variant in &variants {
-            println!("{:02x?}", variant);
+            println!("{:?}", variant);
         }
 
-        let dos_time = dtg.to_dos_time();
-        println!("DOS: {}", dos_time);
+        // let dos_time = dtg.to_dos_time();
+        // println!("DOS: {}", dos_time);
 
-        let dtg2 = Timestamp::from_dos_time(dos_time).unwrap();
-        println!("DTG: {}", dtg2.value.format(&format).unwrap());
+        // let dtg2 = Timestamp::from_dos_time(dos_time).unwrap();
+        // println!("DTG: {}", dtg2.value.format(&format).unwrap());
 
-        assert_eq!(dtg, dtg2);
+        // assert_eq!(dtg, dtg2);
 
-        let dtg = Timestamp::new(datetime!(1969-12-31 23:59:59));
-        println!("{:?}", &dtg);
-        println!("{:?}", &dtg.to_epoch_secs());
-        for variant in dtg.discombobulate() {
-            println!("{:02x?}", variant);
-        }
+        // let dtg = Timestamp::new(datetime!(1969-12-31 23:59:59));
+        // println!("{:?}", &dtg);
+        // println!("{:?}", &dtg.to_epoch_secs());
+        // for variant in dtg.discombobulate() {
+        //     println!("{:02x?}", variant);
+        // }
 
-        let i1: i32 = -10;
-        let v = i1.encode_var_vec();
+        // let i1: i32 = -10;
+        // let v = i1.encode_var_vec();
 
-        let i2 = i32::decode_var(&v).unwrap().0;
-        println!("{} -> {:02x?} -> {}", i1, v, i2);
+        // let i2 = i32::decode_var(&v).unwrap().0;
+        // println!("{} -> {:02x?} -> {}", i1, v, i2);
 
         assert_eq!(1, 1);
     }

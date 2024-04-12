@@ -6,8 +6,8 @@ use super::{variant::NeedleVariant, Discombobulate, Matches};
 //#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct Integer {
-    value: i64,
-    tolerance: Option<i64>,
+    pub value: i64,
+    pub tolerance: Option<i64>,
 }
 
 impl Integer {
@@ -98,8 +98,8 @@ impl Discombobulate for Integer {
 
 #[derive(Clone, Debug, PartialOrd)]
 pub struct Float {
-    value: f64,
-    tolerance: Option<f64>,
+    pub value: f64,
+    pub tolerance: Option<f64>,
 }
 
 impl PartialEq for Float {

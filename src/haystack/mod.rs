@@ -49,18 +49,18 @@ impl Haystack {
                 for variant in &variants {
                     //println!("{:?}", &variant);
 
-                    if let Ok(needle) = variant.recombobulate() {
+                    if let Ok(putative) = variant.recombobulate() {
                         //println!("{:?}", &needle);
 
                         let hits = self
                             .needles
                             .iter()
-                            .filter(|target| needle.matches(target))
+                            .filter(|target| putative.matches(target))
                             .map(|target| {
                                 //println!("It's a match!");
                                 Ashes::new(
                                     target,
-                                    needle.clone(),
+                                    putative.clone(),
                                     NeedleVariant::Integer(variant.clone()),
                                     i,
                                 )
@@ -79,18 +79,18 @@ impl Haystack {
                 for variant in &variants {
                     //println!("{:?}", &variant);
 
-                    if let Ok(needle) = variant.recombobulate() {
+                    if let Ok(putative) = variant.recombobulate() {
                         //println!("{:?}", &needle);
 
                         let hits = self
                             .needles
                             .iter()
-                            .filter(|target| needle.matches(target))
+                            .filter(|target| putative.matches(target))
                             .map(|target| {
                                 //println!("It's a match!");
                                 Ashes::new(
                                     target,
-                                    needle.clone(),
+                                    putative.clone(),
                                     NeedleVariant::Float(variant.clone()),
                                     i,
                                 )
@@ -109,18 +109,18 @@ impl Haystack {
                 for variant in &variants {
                     //println!("{:?}", &variant);
 
-                    if let Ok(needle) = variant.recombobulate() {
+                    if let Ok(putative) = variant.recombobulate() {
                         //println!("{:?}", &needle);
 
                         let hits = self
                             .needles
                             .iter()
-                            .filter(|target| needle.matches(target))
+                            .filter(|target| putative.matches(target))
                             .map(|target| {
                                 //println!("It's a match!");
                                 Ashes::new(
                                     target,
-                                    needle.clone(),
+                                    putative.clone(),
                                     NeedleVariant::Timestamp(variant.clone()),
                                     i,
                                 )

@@ -4,7 +4,7 @@ use crate::needle::{
     number::variants::{FloatVariant, IntegerVariant},
     timestamp::variants::TimestampVariant,
     variant::NeedleVariant,
-    Discombobulate, Interpret, Matches, Needle, Recombobulate,
+    Interpret, Matches, Needle, Recombobulate,
 };
 
 use self::ashes::Ashes;

@@ -113,7 +113,7 @@ impl Timestamp {
     }
 
     pub fn from_epoch_secs(value: i64) -> Result<Self> {
-        if let Ok(dtg) = OffsetDateTime::from_unix_timestamp(value as i64) {
+        if let Ok(dtg) = OffsetDateTime::from_unix_timestamp(value) {
             Ok(Timestamp::new(PrimitiveDateTime::new(
                 dtg.date(),
                 dtg.time(),
@@ -269,7 +269,7 @@ impl Discombobulate for Timestamp {
 
 #[cfg(test)]
 mod tests {
-    use integer_encoding::VarInt;
+    //use integer_encoding::VarInt;
     use time::{format_description, macros::datetime};
 
     use super::*;

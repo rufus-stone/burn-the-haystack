@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 
 use super::{
     location::variant::LocationVariant,
@@ -21,8 +21,8 @@ impl NeedleVariant {
         match self {
             NeedleVariant::Integer(v) => v.byte_sequence(),
             NeedleVariant::Float(v) => v.byte_sequence(),
-            NeedleVariant::Timestamp(v) => todo!(),
-            NeedleVariant::Location(v) => todo!(),
+            NeedleVariant::Timestamp(_) => todo!(),
+            NeedleVariant::Location(_) => todo!(),
         }
     }
 }

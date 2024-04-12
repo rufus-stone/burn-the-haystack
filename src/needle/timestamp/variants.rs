@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Result};
-use time::PrimitiveDateTime;
 
 use crate::needle::{
     number::variants::IntegerVariant, timestamp::Timestamp, Interpret, Needle, Recombobulate,
@@ -28,7 +27,6 @@ impl Recombobulate for TimestampVariant {
         match self {
             TimestampVariant::EpochSecs(v) => {
                 if let Ok(Needle::Integer(integer)) = v.recombobulate() {
-                    let value = integer.value;
                     Ok(Needle::Timestamp(Timestamp::from_epoch_secs(
                         integer.value,
                     )?))
@@ -40,7 +38,6 @@ impl Recombobulate for TimestampVariant {
             }
             TimestampVariant::EpochMillis(v) => {
                 if let Ok(Needle::Integer(integer)) = v.recombobulate() {
-                    let value = integer.value;
                     Ok(Needle::Timestamp(Timestamp::from_epoch_millis(
                         integer.value,
                     )?))
@@ -52,7 +49,6 @@ impl Recombobulate for TimestampVariant {
             }
             TimestampVariant::EpochMicros(v) => {
                 if let Ok(Needle::Integer(integer)) = v.recombobulate() {
-                    let value = integer.value;
                     Ok(Needle::Timestamp(Timestamp::from_epoch_micros(
                         integer.value,
                     )?))

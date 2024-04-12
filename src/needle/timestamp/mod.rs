@@ -2,6 +2,8 @@ pub mod variants;
 
 use time::{Date, Duration, Month, OffsetDateTime, PrimitiveDateTime, Time};
 
+use anyhow::{anyhow, Result};
+
 use self::variants::TimestampVariant::*;
 use super::variant::NeedleVariant;
 use super::Discombobulate;
@@ -73,11 +75,11 @@ impl Timestamp {
             | (self.value.second() as u32) >> 1
     }
 
-    pub fn to_epoch_secs(&self) -> i32 {
-        self.value.assume_utc().unix_timestamp() as i32
+    pub fn to_epoch_secs(&self) -> i64 {
+        self.value.assume_utc().unix_timestamp() // as i32
     }
 
-    pub fn from_dos_time(value: u32) -> Option<Self> {
+    pub fn from_dos_time(value: u32) -> Result<Self> {
         let year = ((value >> 25) & 0x7F) + 1980;
         let month = (value >> 21) & 0x0F;
         let day = (value >> 16) & 0x1F;
@@ -88,37 +90,77 @@ impl Timestamp {
         if let Some(month) = u8_to_month(month as u8) {
             if let Ok(date) = Date::from_calendar_date(year as i32, month, day as u8) {
                 if let Ok(time) = Time::from_hms(hour as u8, minute as u8, second as u8) {
-                    Some(Timestamp::new(PrimitiveDateTime::new(date, time)))
+                    Ok(Timestamp::new(PrimitiveDateTime::new(date, time)))
                 } else {
-                    None
+                    Err(anyhow!(
+                        "Invalid time: {}:{}:{}",
+                        hour as u8,
+                        minute as u8,
+                        second as u8
+                    ))
                 }
             } else {
-                None
+                Err(anyhow!(
+                    "Invalid calendar date: {}-{}-{}",
+                    year as i32,
+                    month,
+                    day as u8
+                ))
             }
         } else {
-            None
+            Err(anyhow!("Invalid month: {}", month as u8))
         }
     }
 
-    pub fn from_epoch_secs(value: i32) -> Option<Self> {
+    pub fn from_epoch_secs(value: i64) -> Result<Self> {
         if let Ok(dtg) = OffsetDateTime::from_unix_timestamp(value as i64) {
-            Some(Timestamp::new(PrimitiveDateTime::new(
+            Ok(Timestamp::new(PrimitiveDateTime::new(
                 dtg.date(),
                 dtg.time(),
             )))
         } else {
-            None
+            Err(anyhow!(
+                "Failed to recreate Needle::Timestamp from epoch seconds value"
+            ))
         }
     }
 
-    pub fn from_epoch_nanos(value: i64) -> Option<Self> {
-        if let Ok(dtg) = OffsetDateTime::from_unix_timestamp_nanos(value as i128) {
-            Some(Timestamp::new(PrimitiveDateTime::new(
+    pub fn from_epoch_millis(value: i64) -> Result<Self> {
+        if let Ok(dtg) = OffsetDateTime::from_unix_timestamp_nanos(value as i128 / 1000000) {
+            Ok(Timestamp::new(PrimitiveDateTime::new(
                 dtg.date(),
                 dtg.time(),
             )))
         } else {
-            None
+            Err(anyhow!(
+                "Failed to recreate Needle::Timestamp from epoch millis value"
+            ))
+        }
+    }
+
+    pub fn from_epoch_micros(value: i64) -> Result<Self> {
+        if let Ok(dtg) = OffsetDateTime::from_unix_timestamp_nanos(value as i128 / 1000) {
+            Ok(Timestamp::new(PrimitiveDateTime::new(
+                dtg.date(),
+                dtg.time(),
+            )))
+        } else {
+            Err(anyhow!(
+                "Failed to recreate Needle::Timestamp from epoch micros value"
+            ))
+        }
+    }
+
+    pub fn from_epoch_nanos(value: i64) -> Result<Self> {
+        if let Ok(dtg) = OffsetDateTime::from_unix_timestamp_nanos(value as i128) {
+            Ok(Timestamp::new(PrimitiveDateTime::new(
+                dtg.date(),
+                dtg.time(),
+            )))
+        } else {
+            Err(anyhow!(
+                "Failed to recreate Needle::Timestamp from epoch nanos value"
+            ))
         }
     }
 }

@@ -6,6 +6,7 @@ pub mod timestamp;
 pub mod variant;
 
 use anyhow::{anyhow, Result};
+use measurements::Distance;
 use time::{format_description, Duration, PrimitiveDateTime};
 
 use self::{
@@ -29,50 +30,79 @@ impl Needle {
     // Bytes creation
 
     // Integer creation
-    pub fn new_integer(value: i64) -> Option<Self> {
-        Some(Needle::Integer(number::Integer::new(value)))
+    pub fn new_integer(value: i64) -> Result<Self> {
+        Ok(Needle::Integer(number::Integer::new(value)))
     }
 
-    pub fn new_integer_with_tolerance(value: i64, tolerance: i64) -> Option<Self> {
-        Some(Needle::Integer(number::Integer::with_tolerance(
+    pub fn new_integer_with_tolerance(value: i64, tolerance: i64) -> Result<Self> {
+        Ok(Needle::Integer(number::Integer::with_tolerance(
             value, tolerance,
         )))
     }
 
     // Float creation
-    pub fn new_float(value: f64) -> Option<Self> {
-        Some(Needle::Float(number::Float::new(value)))
+    pub fn new_float(value: f64) -> Result<Self> {
+        Ok(Needle::Float(number::Float::new(value)))
     }
 
-    pub fn new_float_with_tolerance(value: f64, tolerance: f64) -> Option<Self> {
-        Some(Needle::Float(number::Float::with_tolerance(
+    pub fn new_float_with_tolerance(value: f64, tolerance: f64) -> Result<Self> {
+        Ok(Needle::Float(number::Float::with_tolerance(
             value, tolerance,
         )))
     }
 
     // Timestamp creation
-    pub fn new_timestamp(dtg: &str) -> Option<Self> {
+    pub fn new_timestamp(dtg: &str) -> Result<Self> {
         let format =
             format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
 
         if let Ok(datetime) = PrimitiveDateTime::parse(dtg, &format) {
-            Some(Self::Timestamp(Timestamp::new(datetime)))
+            Ok(Self::Timestamp(Timestamp::new(datetime)))
         } else {
-            None
+            Err(anyhow!("Failed to parse timestamp string: {}", dtg))
         }
     }
 
-    pub fn new_timestamp_with_tolerance(dtg: &str, tolerance: Duration) -> Option<Self> {
+    pub fn new_timestamp_with_tolerance(dtg: &str, tolerance: Duration) -> Result<Self> {
         let format =
             format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
 
         if let Ok(datetime) = PrimitiveDateTime::parse(dtg, &format) {
-            Some(Self::Timestamp(Timestamp::with_tolerance(
+            Ok(Self::Timestamp(Timestamp::with_tolerance(
                 datetime, tolerance,
             )))
         } else {
-            None
+            Err(anyhow!("Failed to parse timestamp string: {}", dtg))
         }
+    }
+
+    // Location creation
+    pub fn new_location(lat: f64, lon: f64) -> Result<Self> {
+        Ok(Needle::Location(location::Location::new(lat, lon)?))
+    }
+
+    pub fn new_location_with_tolerance(lat: f64, lon: f64, tolerance: Distance) -> Result<Self> {
+        Ok(Needle::Location(location::Location::with_tolerance(
+            lat, lon, tolerance,
+        )?))
+    }
+
+    // IP Address creation
+    pub fn new_ip_address(dtg: &str) -> Result<Self> {
+        todo!()
+    }
+
+    pub fn new_ip_address_with_tolerance(dtg: &str, tolerance: u8) -> Result<Self> {
+        todo!()
+    }
+
+    // MAC Address creation
+    pub fn new_mac_address(dtg: &str) -> Result<Self> {
+        todo!()
+    }
+
+    pub fn new_mac_address_with_tolerance(dtg: &str, tolerance: u8) -> Result<Self> {
+        todo!()
     }
 }
 

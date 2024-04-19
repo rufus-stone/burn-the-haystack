@@ -1,11 +1,15 @@
 pub mod variant;
 
+use anyhow::{anyhow, Result};
 use geo::{HaversineDistance, Point};
+use itertools::Itertools;
 use measurements::Distance;
 
 use self::variant::LocationVariant::*;
 
-use super::{variant::NeedleVariant, Discombobulate, Matches};
+use super::{
+    number::variants::FloatVariant, variant::NeedleVariant, Discombobulate, Matches, Needle,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Location {
@@ -25,22 +29,22 @@ impl PartialOrd for Location {
 }
 
 impl Location {
-    pub fn new(lat: f64, lon: f64) -> Option<Self> {
+    pub fn new(lat: f64, lon: f64) -> Result<Self> {
         if !(-90.0..=90.0).contains(&lat) || !(-180.0..=180.0).contains(&lon) {
-            None
+            Err(anyhow!("Invalid lat/lon values: {},{}", lat, lon))
         } else {
-            Some(Self {
+            Ok(Self {
                 value: Point::new(lon, lat), // A Point takes an x and a y, hence lon then lat rather than lat then lon
                 tolerance: None,
             })
         }
     }
 
-    pub fn with_tolerance(lat: f64, lon: f64, tolerance: Distance) -> Option<Self> {
+    pub fn with_tolerance(lat: f64, lon: f64, tolerance: Distance) -> Result<Self> {
         if !(-90.0..=90.0).contains(&lat) || !(-180.0..=180.0).contains(&lon) {
-            None
+            Err(anyhow!("Invalid lat/lon values: {},{}", lat, lon))
         } else {
-            Some(Self {
+            Ok(Self {
                 value: Point::new(lon, lat),
                 tolerance: Some(tolerance),
             })
@@ -69,38 +73,195 @@ impl Discombobulate for Location {
     fn discombobulate(&self) -> Vec<NeedleVariant> {
         let mut variants = Vec::<NeedleVariant>::new();
 
-        let (lon, lat) = self.value.x_y();
-
         // Decimal degrees
-        let dd_f64_le = [lat.to_le_bytes().as_slice(), lon.to_le_bytes().as_slice()].concat();
-        let dd_f64_be = [lat.to_be_bytes().as_slice(), lon.to_be_bytes().as_slice()].concat();
+        // ---------------
+        let (lon_decimal_degrees, lat_decimal_degrees) = self.value.x_y();
 
-        variants.push(NeedleVariant::Location(DecimalDegreesF64LE(dd_f64_le)));
-        variants.push(NeedleVariant::Location(DecimalDegreesF64BE(dd_f64_be)));
+        // First, turn the latitude and longitude into Floats as these are the basis for most of our location formats
+        let lat_needle_variants = if let Ok(float_needle) = Needle::new_float(lat_decimal_degrees) {
+            float_needle.discombobulate()
+        } else {
+            Vec::<NeedleVariant>::new()
+        };
 
-        // Also try as an f32
-        if (f32::MIN as f64..=f32::MAX as f64).contains(&lat)
-            && (f32::MIN as f64..=f32::MAX as f64).contains(&lon)
-        {
-            let dd_f32_le = [
-                (lat as f32).to_le_bytes().as_slice(),
-                (lon as f32).to_le_bytes().as_slice(),
-            ]
-            .concat();
-            let dd_f32_be = [
-                (lat as f32).to_be_bytes().as_slice(),
-                (lon as f32).to_be_bytes().as_slice(),
-            ]
-            .concat();
+        let lon_needle_variants = if let Ok(float_needle) = Needle::new_float(lon_decimal_degrees) {
+            float_needle.discombobulate()
+        } else {
+            Vec::<NeedleVariant>::new()
+        };
 
-            variants.push(NeedleVariant::Location(DecimalDegreesF32LE(dd_f32_le)));
-            variants.push(NeedleVariant::Location(DecimalDegreesF32BE(dd_f32_be)));
+        // TODO: Make a more intelligent assessment here
+        if lat_needle_variants.len() != lon_needle_variants.len() {
+            println!(
+                "{} vs {} lat and lon needle variants!",
+                lat_needle_variants.len(),
+                lon_needle_variants.len()
+            );
+            return variants;
+        }
+
+        // Zip together the two vectors of NeedleVariants and only keep the Floats
+        let lat_lon_needle_variants = lat_needle_variants
+            .iter()
+            .zip(lon_needle_variants.iter())
+            .filter(|(lat_needle_variant, lon_needle_variant)| {
+                matches!(
+                    (lat_needle_variant, lon_needle_variant),
+                    (NeedleVariant::Float(_), NeedleVariant::Float(_),)
+                )
+            })
+            .collect_vec();
+
+        // Pair up matching FloatVariants
+        for (lat_variants, lon_variants) in &lat_lon_needle_variants {
+            if let (
+                NeedleVariant::Float(lat_float_variant),
+                NeedleVariant::Float(lon_float_variant),
+            ) = (lat_variants, lon_variants)
+            {
+                match (lat_float_variant, lon_float_variant) {
+                    (FloatVariant::F32LE(_), FloatVariant::F32LE(_))
+                    | (FloatVariant::F32BE(_), FloatVariant::F32BE(_))
+                    | (FloatVariant::F64LE(_), FloatVariant::F64LE(_))
+                    | (FloatVariant::F64BE(_), FloatVariant::F64BE(_)) => {
+                        variants.push(NeedleVariant::Location(DecimalDegrees(
+                            lat_float_variant.clone(),
+                            lon_float_variant.clone(),
+                        )));
+                    }
+                    _ => (),
+                }
+            }
+        }
+
+        // Decimal minutes
+        // ---------------
+        let lat_decimal_minutes = lat_decimal_degrees * 60.0;
+        let lon_decimal_minutes = lon_decimal_degrees * 60.0;
+
+        // First, turn the latitude and longitude into Needle::Float
+        let lat_needle_variants = if let Ok(float_needle) = Needle::new_float(lat_decimal_minutes) {
+            float_needle.discombobulate()
+        } else {
+            Vec::<NeedleVariant>::new()
+        };
+
+        let lon_needle_variants = if let Ok(float_needle) = Needle::new_float(lon_decimal_minutes) {
+            float_needle.discombobulate()
+        } else {
+            Vec::<NeedleVariant>::new()
+        };
+
+        // TODO: Make a more intelligent assessment here
+        if lat_needle_variants.len() != lon_needle_variants.len() {
+            println!(
+                "{} vs {} lat and lon needle variants!",
+                lat_needle_variants.len(),
+                lon_needle_variants.len()
+            );
+            return variants;
+        }
+
+        // Zip together the two vectors of NeedleVariants and only keep NeedleVariant::Float
+        let lat_lon_needle_variants = lat_needle_variants
+            .iter()
+            .zip(lon_needle_variants.iter())
+            .filter(|(lat_needle_variant, lon_needle_variant)| {
+                matches!(
+                    (lat_needle_variant, lon_needle_variant),
+                    (NeedleVariant::Float(_), NeedleVariant::Float(_),)
+                )
+            })
+            .collect_vec();
+
+        // Keep matching pairs of FloatVariant
+        for (lat_variants, lon_variants) in &lat_lon_needle_variants {
+            if let (
+                NeedleVariant::Float(lat_float_variant),
+                NeedleVariant::Float(lon_float_variant),
+            ) = (lat_variants, lon_variants)
+            {
+                match (lat_float_variant, lon_float_variant) {
+                    (FloatVariant::F32LE(_), FloatVariant::F32LE(_))
+                    | (FloatVariant::F32BE(_), FloatVariant::F32BE(_))
+                    | (FloatVariant::F64LE(_), FloatVariant::F64LE(_))
+                    | (FloatVariant::F64BE(_), FloatVariant::F64BE(_)) => {
+                        variants.push(NeedleVariant::Location(DecimalMinutes(
+                            lat_float_variant.clone(),
+                            lon_float_variant.clone(),
+                        )));
+                    }
+                    _ => (),
+                }
+            }
+        }
+
+        // Decimal seconds
+        // ---------------
+        let lat_decimal_seconds = lat_decimal_minutes * 60.0;
+        let lon_decimal_seconds = lon_decimal_minutes * 60.0;
+
+        // First, turn the latitude and longitude into Needle::Float
+        let lat_needle_variants = if let Ok(float_needle) = Needle::new_float(lat_decimal_seconds) {
+            float_needle.discombobulate()
+        } else {
+            Vec::<NeedleVariant>::new()
+        };
+
+        let lon_needle_variants = if let Ok(float_needle) = Needle::new_float(lon_decimal_seconds) {
+            float_needle.discombobulate()
+        } else {
+            Vec::<NeedleVariant>::new()
+        };
+
+        // TODO: Make a more intelligent assessment here
+        if lat_needle_variants.len() != lon_needle_variants.len() {
+            println!(
+                "{} vs {} lat and lon needle variants!",
+                lat_needle_variants.len(),
+                lon_needle_variants.len()
+            );
+            return variants;
+        }
+
+        // Zip together the two vectors of NeedleVariants and only keep NeedleVariant::Float
+        let lat_lon_needle_variants = lat_needle_variants
+            .iter()
+            .zip(lon_needle_variants.iter())
+            .filter(|(lat_needle_variant, lon_needle_variant)| {
+                matches!(
+                    (lat_needle_variant, lon_needle_variant),
+                    (NeedleVariant::Float(_), NeedleVariant::Float(_),)
+                )
+            })
+            .collect_vec();
+
+        // Keep matching pairs of FloatVariant
+        for (lat_variants, lon_variants) in &lat_lon_needle_variants {
+            if let (
+                NeedleVariant::Float(lat_float_variant),
+                NeedleVariant::Float(lon_float_variant),
+            ) = (lat_variants, lon_variants)
+            {
+                match (lat_float_variant, lon_float_variant) {
+                    (FloatVariant::F32LE(_), FloatVariant::F32LE(_))
+                    | (FloatVariant::F32BE(_), FloatVariant::F32BE(_))
+                    | (FloatVariant::F64LE(_), FloatVariant::F64LE(_))
+                    | (FloatVariant::F64BE(_), FloatVariant::F64BE(_)) => {
+                        variants.push(NeedleVariant::Location(DecimalSeconds(
+                            lat_float_variant.clone(),
+                            lon_float_variant.clone(),
+                        )));
+                    }
+                    _ => (),
+                }
+            }
         }
 
         // TODO: add support for:
         // Degrees decimal minutes
-        // Degrees Minutes Seconds as 3 x u8
-        // Degrees Minutes Seconds as 1 x u16
+        // Degrees Minutes Seconds
+        //
 
         variants
     }
@@ -152,5 +313,15 @@ mod tests {
             Location::with_tolerance(38.88940, -77.04111, Distance::from_kilometres(1.0)).unwrap();
 
         assert!(p1.matches(&p2));
+    }
+
+    #[test]
+    fn location_discombobulation() {
+        let location = Location::new(38.88929, -77.04824).unwrap();
+
+        let variants = location.discombobulate();
+        for variant in &variants {
+            println!("{:?}", variant);
+        }
     }
 }

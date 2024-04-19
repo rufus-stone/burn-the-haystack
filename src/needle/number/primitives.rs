@@ -140,10 +140,10 @@ impl Discombobulate for f32 {
         let mut variants = Vec::<NeedleVariant>::new();
 
         let le_bytes = self.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Float(F32LE(le_bytes)));
+        variants.push(NeedleVariant::Float(F32LE((le_bytes, *self))));
 
         let be_bytes = self.to_be_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Float(F32BE(be_bytes)));
+        variants.push(NeedleVariant::Float(F32BE((be_bytes, *self))));
 
         variants
     }
@@ -154,10 +154,10 @@ impl Discombobulate for f64 {
         let mut variants = Vec::<NeedleVariant>::new();
 
         let le_bytes = self.to_le_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Float(F64LE(le_bytes)));
+        variants.push(NeedleVariant::Float(F64LE((le_bytes, *self))));
 
         let be_bytes = self.to_be_bytes().as_slice().to_owned();
-        variants.push(NeedleVariant::Float(F64BE(be_bytes)));
+        variants.push(NeedleVariant::Float(F64BE((be_bytes, *self))));
 
         variants
     }

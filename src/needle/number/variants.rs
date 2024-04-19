@@ -430,7 +430,7 @@ impl Recombobulate for IntegerVariant {
         match self {
             IntegerVariant::U8(v) => {
                 if IntegerVariant::as_u8(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -445,7 +445,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::U8Varint(v) => {
                 if IntegerVariant::as_u8_varint(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -460,7 +460,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::I8(v) => {
                 if IntegerVariant::as_i8(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -475,7 +475,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::I8Varint(v) => {
                 if IntegerVariant::as_i8_varint(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -490,7 +490,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::U16LE(v) => {
                 if IntegerVariant::as_u16_le(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -505,7 +505,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::U16BE(v) => {
                 if IntegerVariant::as_u16_be(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -520,7 +520,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::U16Varint(v) => {
                 if IntegerVariant::as_u16_varint(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -535,7 +535,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::I16LE(v) => {
                 if IntegerVariant::as_i16_le(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -550,7 +550,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::I16BE(v) => {
                 if IntegerVariant::as_i16_be(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -565,7 +565,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::I16Varint(v) => {
                 if IntegerVariant::as_i16_varint(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -580,7 +580,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::U32LE(v) => {
                 if IntegerVariant::as_u32_le(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -595,7 +595,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::U32BE(v) => {
                 if IntegerVariant::as_u32_be(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -610,7 +610,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::U32Varint(v) => {
                 if IntegerVariant::as_u32_varint(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -625,7 +625,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::I32LE(v) => {
                 if IntegerVariant::as_i32_le(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -640,7 +640,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::I32BE(v) => {
                 if IntegerVariant::as_i32_be(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -655,7 +655,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::I32Varint(v) => {
                 if IntegerVariant::as_i32_varint(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -670,7 +670,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::U64LE(v) => {
                 if IntegerVariant::as_u64_le(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -685,7 +685,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::U64BE(v) => {
                 if IntegerVariant::as_u64_be(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -700,7 +700,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::U64Varint(v) => {
                 if IntegerVariant::as_u64_varint(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1 as i64) {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -715,7 +715,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::I64LE(v) => {
                 if IntegerVariant::as_i64_le(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1) {
+                    if let Ok(needle) = Needle::new_integer(v.1) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -730,7 +730,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::I64BE(v) => {
                 if IntegerVariant::as_i64_be(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1) {
+                    if let Ok(needle) = Needle::new_integer(v.1) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -745,7 +745,7 @@ impl Recombobulate for IntegerVariant {
             }
             IntegerVariant::I64Varint(v) => {
                 if IntegerVariant::as_i64_varint(self.byte_sequence()).is_ok() {
-                    if let Some(needle) = Needle::new_integer(v.1) {
+                    if let Ok(needle) = Needle::new_integer(v.1) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -870,24 +870,24 @@ impl Interpret for IntegerVariant {
 #[derive(Clone, Debug, PartialEq)]
 pub enum FloatVariant {
     // f32
-    F32LE(Vec<u8>),
-    F32BE(Vec<u8>),
+    F32LE((Vec<u8>, f32)),
+    F32BE((Vec<u8>, f32)),
 
     // f64
-    F64LE(Vec<u8>),
-    F64BE(Vec<u8>),
+    F64LE((Vec<u8>, f64)),
+    F64BE((Vec<u8>, f64)),
 }
 
 impl FloatVariant {
     /// 32 bit values
     ///
-    pub fn as_f32_le(data: &[u8]) -> Result<(FloatVariant, f32)> {
+    pub fn as_f32_le(data: &[u8]) -> Result<FloatVariant> {
         // let f = f32::from_le_bytes(data[0..4].try_into()?);
         // Ok((FloatVariant::F32LE(data[0..4].to_owned()), f))
 
         if data.len() >= 4 {
             let f = f32::from_le_bytes(data[0..4].try_into()?);
-            Ok((FloatVariant::F32LE(data[0..4].to_owned()), f))
+            Ok(FloatVariant::F32LE((data[0..4].to_owned(), f)))
         } else {
             Err(anyhow!(
                 "Not enough data for this to be a FloatVariant::F32LE!"
@@ -895,13 +895,13 @@ impl FloatVariant {
         }
     }
 
-    pub fn as_f32_be(data: &[u8]) -> Result<(FloatVariant, f32)> {
+    pub fn as_f32_be(data: &[u8]) -> Result<FloatVariant> {
         // let f = f32::from_be_bytes(data[0..4].try_into()?);
         // Ok((FloatVariant::F32BE(data[0..4].to_owned()), f))
 
         if data.len() >= 4 {
             let f = f32::from_be_bytes(data[0..4].try_into()?);
-            Ok((FloatVariant::F32BE(data[0..4].to_owned()), f))
+            Ok(FloatVariant::F32BE((data[0..4].to_owned(), f)))
         } else {
             Err(anyhow!(
                 "Not enough data for this to be a FloatVariant::F32BE!"
@@ -911,13 +911,13 @@ impl FloatVariant {
 
     /// 64 bit values
     ///
-    pub fn as_f64_le(data: &[u8]) -> Result<(FloatVariant, f64)> {
+    pub fn as_f64_le(data: &[u8]) -> Result<FloatVariant> {
         // let f = f64::from_le_bytes(data[0..8].try_into()?);
         // Ok((FloatVariant::F64LE(data[0..8].to_owned()), f))
 
         if data.len() >= 8 {
             let f = f64::from_le_bytes(data[0..8].try_into()?);
-            Ok((FloatVariant::F64LE(data[0..8].to_owned()), f))
+            Ok(FloatVariant::F64LE((data[0..8].to_owned(), f)))
         } else {
             Err(anyhow!(
                 "Not enough data for this to be a FloatVariant::F64LE!"
@@ -925,13 +925,13 @@ impl FloatVariant {
         }
     }
 
-    pub fn as_f64_be(data: &[u8]) -> Result<(FloatVariant, f64)> {
+    pub fn as_f64_be(data: &[u8]) -> Result<FloatVariant> {
         // let f = f64::from_be_bytes(data[0..8].try_into()?);
         // Ok((FloatVariant::F64BE(data[0..8].to_owned()), f))
 
         if data.len() >= 8 {
             let f = f64::from_be_bytes(data[0..8].try_into()?);
-            Ok((FloatVariant::F64BE(data[0..8].to_owned()), f))
+            Ok(FloatVariant::F64BE((data[0..8].to_owned(), f)))
         } else {
             Err(anyhow!(
                 "Not enough data for this to be a FloatVariant::F64BE!"
@@ -941,10 +941,10 @@ impl FloatVariant {
 
     pub fn byte_sequence(&self) -> &[u8] {
         match self {
-            FloatVariant::F32LE(v) => v,
-            FloatVariant::F32BE(v) => v,
-            FloatVariant::F64LE(v) => v,
-            FloatVariant::F64BE(v) => v,
+            FloatVariant::F32LE(v) => &v.0,
+            FloatVariant::F32BE(v) => &v.0,
+            FloatVariant::F64LE(v) => &v.0,
+            FloatVariant::F64BE(v) => &v.0,
         }
     }
 }
@@ -953,8 +953,8 @@ impl Recombobulate for FloatVariant {
     fn recombobulate(&self) -> Result<Needle> {
         match self {
             FloatVariant::F32LE(v) => {
-                if let Ok((_, f)) = FloatVariant::as_f32_le(v) {
-                    if let Some(needle) = Needle::new_float(f as f64) {
+                if FloatVariant::as_f32_le(self.byte_sequence()).is_ok() {
+                    if let Ok(needle) = Needle::new_float(v.1 as f64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -968,8 +968,8 @@ impl Recombobulate for FloatVariant {
                 }
             }
             FloatVariant::F32BE(v) => {
-                if let Ok((_, f)) = FloatVariant::as_f32_be(v) {
-                    if let Some(needle) = Needle::new_float(f as f64) {
+                if FloatVariant::as_f32_be(self.byte_sequence()).is_ok() {
+                    if let Ok(needle) = Needle::new_float(v.1 as f64) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -983,8 +983,8 @@ impl Recombobulate for FloatVariant {
                 }
             }
             FloatVariant::F64LE(v) => {
-                if let Ok((_, f)) = FloatVariant::as_f64_le(v) {
-                    if let Some(needle) = Needle::new_float(f) {
+                if FloatVariant::as_f64_le(self.byte_sequence()).is_ok() {
+                    if let Ok(needle) = Needle::new_float(v.1) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -998,8 +998,8 @@ impl Recombobulate for FloatVariant {
                 }
             }
             FloatVariant::F64BE(v) => {
-                if let Ok((_, f)) = FloatVariant::as_f64_be(v) {
-                    if let Some(needle) = Needle::new_float(f) {
+                if FloatVariant::as_f64_be(self.byte_sequence()).is_ok() {
+                    if let Ok(needle) = Needle::new_float(v.1) {
                         Ok(needle)
                     } else {
                         Err(anyhow!(
@@ -1025,21 +1025,21 @@ impl Interpret for FloatVariant {
 
         // 32 bit values
         //
-        if let Ok((v, _)) = FloatVariant::as_f32_le(data) {
+        if let Ok(v) = FloatVariant::as_f32_le(data) {
             intepretations.push(v);
         }
 
-        if let Ok((v, _)) = FloatVariant::as_f32_be(data) {
+        if let Ok(v) = FloatVariant::as_f32_be(data) {
             intepretations.push(v);
         }
 
         // 64 bit values
         //
-        if let Ok((v, _)) = FloatVariant::as_f64_le(data) {
+        if let Ok(v) = FloatVariant::as_f64_le(data) {
             intepretations.push(v);
         }
 
-        if let Ok((v, _)) = FloatVariant::as_f64_be(data) {
+        if let Ok(v) = FloatVariant::as_f64_be(data) {
             intepretations.push(v);
         }
 

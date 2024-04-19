@@ -189,7 +189,7 @@ impl Discombobulate for Timestamp {
 
         // Epoch seconds
         let epoch_secs = self.value.assume_utc().unix_timestamp();
-        if let Some(integer_needle) = Needle::new_integer(epoch_secs) {
+        if let Ok(integer_needle) = Needle::new_integer(epoch_secs) {
             let needle_variants = integer_needle.discombobulate();
 
             for needle_variant in &needle_variants {
@@ -201,7 +201,7 @@ impl Discombobulate for Timestamp {
 
         // Epoch millis
         let epoch_millis = epoch_secs * 1000;
-        if let Some(integer_needle) = Needle::new_integer(epoch_millis) {
+        if let Ok(integer_needle) = Needle::new_integer(epoch_millis) {
             let needle_variants = integer_needle.discombobulate();
 
             for needle_variant in &needle_variants {
@@ -213,7 +213,7 @@ impl Discombobulate for Timestamp {
 
         // Epoch micros
         let epoch_micros = epoch_millis * 1000;
-        if let Some(integer_needle) = Needle::new_integer(epoch_micros) {
+        if let Ok(integer_needle) = Needle::new_integer(epoch_micros) {
             let needle_variants = integer_needle.discombobulate();
 
             for needle_variant in &needle_variants {
@@ -225,7 +225,7 @@ impl Discombobulate for Timestamp {
 
         // Epoch nanos
         let epoch_nanos = epoch_micros * 1000;
-        if let Some(integer_needle) = Needle::new_integer(epoch_nanos) {
+        if let Ok(integer_needle) = Needle::new_integer(epoch_nanos) {
             let needle_variants = integer_needle.discombobulate();
 
             for needle_variant in &needle_variants {

@@ -124,9 +124,14 @@ impl Discombobulate for Location {
                     | (FloatVariant::F32BE(_), FloatVariant::F32BE(_))
                     | (FloatVariant::F64LE(_), FloatVariant::F64LE(_))
                     | (FloatVariant::F64BE(_), FloatVariant::F64BE(_)) => {
-                        variants.push(NeedleVariant::Location(DecimalDegrees(
+                        variants.push(NeedleVariant::Location(DecimalDegreesLatLon(
                             lat_float_variant.clone(),
                             lon_float_variant.clone(),
+                        )));
+
+                        variants.push(NeedleVariant::Location(DecimalDegreesLonLat(
+                            lon_float_variant.clone(),
+                            lat_float_variant.clone(),
                         )));
                     }
                     _ => (),
@@ -186,9 +191,14 @@ impl Discombobulate for Location {
                     | (FloatVariant::F32BE(_), FloatVariant::F32BE(_))
                     | (FloatVariant::F64LE(_), FloatVariant::F64LE(_))
                     | (FloatVariant::F64BE(_), FloatVariant::F64BE(_)) => {
-                        variants.push(NeedleVariant::Location(DecimalMinutes(
+                        variants.push(NeedleVariant::Location(DecimalMinutesLatLon(
                             lat_float_variant.clone(),
                             lon_float_variant.clone(),
+                        )));
+
+                        variants.push(NeedleVariant::Location(DecimalMinutesLonLat(
+                            lon_float_variant.clone(),
+                            lat_float_variant.clone(),
                         )));
                     }
                     _ => (),
@@ -248,9 +258,14 @@ impl Discombobulate for Location {
                     | (FloatVariant::F32BE(_), FloatVariant::F32BE(_))
                     | (FloatVariant::F64LE(_), FloatVariant::F64LE(_))
                     | (FloatVariant::F64BE(_), FloatVariant::F64BE(_)) => {
-                        variants.push(NeedleVariant::Location(DecimalSeconds(
+                        variants.push(NeedleVariant::Location(DecimalSecondsLatLon(
                             lat_float_variant.clone(),
                             lon_float_variant.clone(),
+                        )));
+
+                        variants.push(NeedleVariant::Location(DecimalSecondsLonLat(
+                            lon_float_variant.clone(),
+                            lat_float_variant.clone(),
                         )));
                     }
                     _ => (),
@@ -321,7 +336,7 @@ mod tests {
 
         let variants = location.discombobulate();
         for variant in &variants {
-            println!("{:?}", variant);
+            println!("{:02x?}", variant);
         }
     }
 }

@@ -1,6 +1,7 @@
 use itertools::Itertools;
 
 use crate::needle::{
+    location::variant::LocationVariant,
     number::variants::{FloatVariant, IntegerVariant},
     timestamp::variants::TimestampVariant,
     variant::NeedleVariant,
@@ -133,6 +134,36 @@ impl Haystack {
                     }
                 }
             }
+
+            // Location
+            if let Ok(variants) = LocationVariant::interpret(window) {
+                for variant in &variants {
+                    //println!("{:?}", &variant);
+
+                    if let Ok(putative) = variant.recombobulate() {
+                        //println!("{:?}", &needle);
+
+                        let hits = self
+                            .needles
+                            .iter()
+                            .filter(|target| putative.matches(target))
+                            .map(|target| {
+                                //println!("It's a match!");
+                                Ashes::new(
+                                    target,
+                                    putative.clone(),
+                                    NeedleVariant::Location(variant.clone()),
+                                    i,
+                                )
+                            })
+                            .collect_vec();
+
+                        for hit in hits {
+                            ash_pile.push(hit);
+                        }
+                    }
+                }
+            }
         }
 
         ash_pile
@@ -141,9 +172,10 @@ impl Haystack {
 
 #[cfg(test)]
 mod tests {
-    use time::{macros::datetime, Duration};
+    use measurements::Distance;
+    use time::Duration;
 
-    use crate::needle::{number::Integer, timestamp::Timestamp};
+    use crate::needle::{location::Location, number::Integer, timestamp::Timestamp};
 
     use super::*;
 
@@ -195,15 +227,12 @@ mod tests {
             0x00, 0x00,
         ];
 
-        let y2k = Timestamp::new(datetime!(2000-01-01 00:00:00));
-        let nye23 = Timestamp::new(datetime!(2023-12-31 23:59:59));
-        let actual = Timestamp::with_tolerance(datetime!(2024-01-02 12:00:00), Duration::days(1));
+        let y2k = Needle::new_timestamp("2000-01-01 00:00:00").unwrap();
+        let nye23 = Needle::new_timestamp("2023-12-31 23:59:59").unwrap();
+        let actual =
+            Needle::new_timestamp_with_tolerance("2024-01-02 12:00:00", Duration::days(1)).unwrap();
 
-        let needles = vec![
-            Needle::Timestamp(y2k),
-            Needle::Timestamp(nye23),
-            Needle::Timestamp(actual),
-        ];
+        let needles = vec![y2k, nye23, actual];
 
         let haystack = Haystack::with_needles(data, needles);
 
@@ -226,22 +255,62 @@ mod tests {
             0x00, 0x00,
         ];
 
-        let y2k = Timestamp::new(datetime!(2000-01-01 00:00:00));
-        let nye23 = Timestamp::new(datetime!(2023-12-31 23:59:59));
-        let actual = Timestamp::with_tolerance(datetime!(2024-01-02 12:00:00), Duration::days(1));
+        let y2k = Needle::new_timestamp("2000-01-01 00:00:00").unwrap();
+        let nye23 = Needle::new_timestamp("2023-12-31 23:59:59").unwrap();
+        let actual =
+            Needle::new_timestamp_with_tolerance("2024-01-02 12:00:00", Duration::days(1)).unwrap();
 
-        let needles = vec![
-            Needle::Timestamp(y2k),
-            Needle::Timestamp(nye23),
-            Needle::Timestamp(actual),
-        ];
+        let needles = vec![y2k, nye23, actual];
 
-        let haystack = Haystack::with_needles(data, needles);
+        let haystack = Haystack::with_needles(data, needles.clone());
 
         let results = haystack.burn();
 
         for result in &results {
             println!("{:?}", result);
         }
+
+        assert!(results.len() == 1); // There should be only one match
+        assert!(results[0].actual.matches(&needles[2])); // It should have matched on the "actual" timestamp
+        assert!(matches!(
+            results[0].variant,
+            NeedleVariant::Timestamp(TimestampVariant::DOSTime(IntegerVariant::U32LE(_)))
+        )) // And the variant that matched should have been a DOSTime built using an unsigned 32bit little endian integer
+    }
+
+    #[test]
+    fn location_needles_test() {
+        // Some random bytes with an set of coordinates in the middle: -31.95, 115.85 DecimalMinutesLatLon(F32LE)
+        let data: Vec<u8> = vec![
+            0xde, 0xad, 0xbe, 0xef, 0x00, 0xa0, 0xef, 0xc4, 0x00, 0x38, 0xd9, 0x45, 0xca, 0xfe,
+            0xba, 0xbe,
+        ];
+
+        let nyc =
+            Needle::new_location_with_tolerance(40.73, -74.03, Distance::from_kilometres(100.0))
+                .unwrap(); // 40.73, -74.03
+        let perth =
+            Needle::new_location_with_tolerance(-31.9525, 115.8500, Distance::from_kilometres(5.0))
+                .unwrap(); // -31.9525, 115.8500
+
+        let needles = vec![nyc, perth];
+
+        let haystack = Haystack::with_needles(data, needles.clone());
+
+        let results = haystack.burn();
+
+        for result in &results {
+            println!("{:02x?}", result);
+        }
+
+        assert!(results.len() == 1); // There should be only one match
+        assert!(results[0].actual.matches(&needles[1])); // It should have matched on the "perth" location
+        assert!(matches!(
+            results[0].variant,
+            NeedleVariant::Location(LocationVariant::DecimalMinutesLatLon(
+                FloatVariant::F32LE(_),
+                FloatVariant::F32LE(_)
+            ))
+        )) // And the variant that matched should have been a DecimalMinutesLatLon built using two 32bit little endian floats
     }
 }

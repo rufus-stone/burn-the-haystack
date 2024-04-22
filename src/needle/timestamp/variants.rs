@@ -146,13 +146,16 @@ mod tests {
 
         if let Ok(interps) = TimestampVariant::interpret(&data) {
             for timestamp_variant in &interps {
-                println!("{:?}", &timestamp_variant);
+                // println!("{:?}", &timestamp_variant);
 
                 if let Ok(timestamp) = timestamp_variant.recombobulate() {
-                    println!("{:?}", &timestamp);
+                    // println!("{:?}", &timestamp);
 
                     if timestamp.matches(&target) {
-                        println!("It's a match!");
+                        println!("[ Target needle found ]");
+                        println!("Target  : {:?}", target);
+                        println!("Actual  : {:?}", timestamp);
+                        println!("Variant : {:02x?}", timestamp_variant);
                     }
                 }
             }

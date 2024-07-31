@@ -140,6 +140,7 @@ mod tests {
         let data = vec![0x7eu8, 0x00, 0x92, 0x65]; // EpochSecsLE
 
         let target = Needle::new_timestamp("2023-12-31 23:59:58").unwrap();
+        //println!("{:02x?}", target.discombobulate());
 
         let interps = TimestampVariant::interpret(&data);
         assert!(interps.is_ok());

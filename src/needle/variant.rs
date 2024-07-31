@@ -1,6 +1,7 @@
 use anyhow::Result;
 
 use super::{
+    ipaddr::variant::IPv4Variant,
     location::variant::LocationVariant,
     number::variants::{FloatVariant, IntegerVariant},
     timestamp::variants::TimestampVariant,
@@ -14,6 +15,7 @@ pub enum NeedleVariant {
     Float(FloatVariant),
     Timestamp(TimestampVariant),
     Location(LocationVariant),
+    IpAddr(IPv4Variant),
 }
 
 impl NeedleVariant {
@@ -23,6 +25,7 @@ impl NeedleVariant {
             NeedleVariant::Float(v) => v.byte_sequence(),
             NeedleVariant::Timestamp(_) => todo!(),
             NeedleVariant::Location(_) => todo!(),
+            NeedleVariant::IpAddr(_) => todo!(),
         }
     }
 }
@@ -33,7 +36,8 @@ impl Recombobulate for NeedleVariant {
             NeedleVariant::Integer(integer_variant) => integer_variant.recombobulate(),
             NeedleVariant::Float(float_variant) => float_variant.recombobulate(),
             NeedleVariant::Timestamp(timestamp_variant) => timestamp_variant.recombobulate(),
-            NeedleVariant::Location(_) => todo!(),
+            NeedleVariant::Location(location_variant) => location_variant.recombobulate(),
+            NeedleVariant::IpAddr(ip_variant) => ip_variant.recombobulate(),
         }
     }
 }

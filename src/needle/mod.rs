@@ -5,7 +5,10 @@ pub mod number;
 pub mod timestamp;
 pub mod variant;
 
+use std::net::Ipv4Addr;
+
 use anyhow::{anyhow, Result};
+use location::variant::LocationVariant;
 use measurements::Distance;
 use time::{format_description, Duration, PrimitiveDateTime};
 
@@ -88,22 +91,25 @@ impl Needle {
     }
 
     // IP Address creation
-    pub fn new_ip_address(dtg: &str) -> Result<Self> {
-        todo!()
+    pub fn new_ip_address(ipaddr: Ipv4Addr) -> Result<Self> {
+        Ok(Needle::IpAddr(ipaddr::IPv4::new(ipaddr)?))
     }
 
-    pub fn new_ip_address_with_tolerance(dtg: &str, tolerance: u8) -> Result<Self> {
-        todo!()
+    pub fn new_ip_address_with_tolerance(ipaddr: Ipv4Addr, cidr_prefix: u8) -> Result<Self> {
+        Ok(Needle::IpAddr(ipaddr::IPv4::with_tolerance(
+            ipaddr,
+            cidr_prefix,
+        )?))
     }
 
     // MAC Address creation
-    pub fn new_mac_address(dtg: &str) -> Result<Self> {
-        todo!()
-    }
+    // pub fn new_mac_address(dtg: &str) -> Result<Self> {
+    //     todo!()
+    // }
 
-    pub fn new_mac_address_with_tolerance(dtg: &str, tolerance: u8) -> Result<Self> {
-        todo!()
-    }
+    // pub fn new_mac_address_with_tolerance(dtg: &str, tolerance: u8) -> Result<Self> {
+    //     todo!()
+    // }
 }
 
 pub trait Matches {
@@ -115,7 +121,7 @@ impl Matches for Needle {
         match (&self, &rhs) {
             (Needle::Timestamp(lhs), Needle::Timestamp(rhs)) => lhs.matches(rhs),
             (Needle::Location(lhs), Needle::Location(rhs)) => lhs.matches(rhs),
-            (Needle::IpAddr(lhs), Needle::IpAddr(rhs)) => lhs == rhs,
+            (Needle::IpAddr(lhs), Needle::IpAddr(rhs)) => lhs.matches(rhs),
             (Needle::MacAddr(lhs), Needle::MacAddr(rhs)) => lhs == rhs,
             (Needle::Integer(lhs), Needle::Integer(rhs)) => lhs.matches(rhs),
             (Needle::Float(lhs), Needle::Float(rhs)) => lhs.matches(rhs),
@@ -187,6 +193,16 @@ impl Interpret for Needle {
         // Try all valid TimestampVariant interpretations
         if let Ok(timestamp_variants) = TimestampVariant::interpret(data) {
             for variant in &timestamp_variants {
+                if let Ok(needle) = variant.recombobulate() {
+                    println!("{:02x?} -> {:?}", &variant, &needle);
+                    needles.push(needle);
+                }
+            }
+        }
+
+        // Try all valid LocationVariant interpretations
+        if let Ok(location_variants) = LocationVariant::interpret(data) {
+            for variant in &location_variants {
                 if let Ok(needle) = variant.recombobulate() {
                     println!("{:02x?} -> {:?}", &variant, &needle);
                     needles.push(needle);
@@ -388,5 +404,56 @@ mod tests {
         if let Ok(interpretations) = Needle::interpret(&data) {
             println!("{:#?}", &interpretations);
         }
+    }
+
+    #[test]
+    fn interpret_location() {
+        let data = vec![0x9au8, 0xd9, 0x1d, 0xc3, 0xe1, 0x7a, 0xaa, 0x41];
+
+        if let Ok(interpretations) = Needle::interpret(&data) {
+            println!("{:#?}", &interpretations);
+        }
+    }
+
+    #[test]
+    fn matches_ipaddr() {
+        // Exactly the same
+        let lhs = Needle::new_ip_address("192.168.0.1".parse().unwrap()).unwrap();
+        let rhs = Needle::new_ip_address("192.168.0.1".parse().unwrap()).unwrap();
+
+        assert!(lhs.matches(&rhs));
+
+        // Not the same
+        let lhs = Needle::new_ip_address("192.168.0.1".parse().unwrap()).unwrap();
+        let rhs = Needle::new_ip_address("192.168.1.1".parse().unwrap()).unwrap();
+
+        assert!(!lhs.matches(&rhs));
+
+        // Within the same /24
+        let lhs = Needle::new_ip_address("192.168.0.1".parse().unwrap()).unwrap();
+        let rhs =
+            Needle::new_ip_address_with_tolerance("192.168.0.0".parse().unwrap(), 24).unwrap();
+
+        assert!(lhs.matches(&rhs));
+
+        // Within the same /16
+        let lhs = Needle::new_ip_address("192.168.22.33".parse().unwrap()).unwrap();
+        let rhs =
+            Needle::new_ip_address_with_tolerance("192.168.0.0".parse().unwrap(), 16).unwrap();
+
+        assert!(lhs.matches(&rhs));
+
+        // Not within the same /16
+        let lhs = Needle::new_ip_address("192.168.22.33".parse().unwrap()).unwrap();
+        let rhs = Needle::new_ip_address_with_tolerance("192.0.0.0".parse().unwrap(), 16).unwrap();
+
+        assert!(!lhs.matches(&rhs));
+
+        // Within the same /8
+        let lhs = Needle::new_ip_address("192.1.2.3".parse().unwrap()).unwrap();
+        let rhs =
+            Needle::new_ip_address_with_tolerance("192.255.255.255".parse().unwrap(), 8).unwrap();
+
+        assert!(lhs.matches(&rhs));
     }
 }

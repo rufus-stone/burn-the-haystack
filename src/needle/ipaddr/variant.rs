@@ -4,13 +4,13 @@ use crate::needle::{number::variants::IntegerVariant, Interpret, Needle, Recombo
 
 use super::IPv4;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum IPv4Variant {
     Numeric(IntegerVariant),
 }
 
 impl Recombobulate for IPv4Variant {
-    fn recombobulate(&self) -> anyhow::Result<crate::needle::Needle> {
+    fn recombobulate(&self) -> Result<Needle> {
         match self {
             IPv4Variant::Numeric(v) => {
                 if let Ok(Needle::Integer(integer)) = v.recombobulate() {

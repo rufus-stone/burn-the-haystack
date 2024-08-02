@@ -3,7 +3,7 @@ use integer_encoding::VarInt;
 
 use crate::needle::{Interpret, Needle, Recombobulate};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum IntegerVariant {
     // u8
     U8((Vec<u8>, u8)),
@@ -867,7 +867,7 @@ impl Interpret for IntegerVariant {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum FloatVariant {
     // f32
     F32LE((Vec<u8>, f32)),

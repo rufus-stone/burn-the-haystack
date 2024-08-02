@@ -4,7 +4,7 @@ use crate::needle::{
     number::variants::IntegerVariant, timestamp::Timestamp, Interpret, Needle, Recombobulate,
 };
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum TimestampVariant {
     // Epoch seconds
     EpochSecs(IntegerVariant),

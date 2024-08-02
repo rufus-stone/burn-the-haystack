@@ -4,7 +4,7 @@ use crate::needle::{
     location::Location, number::variants::FloatVariant, Interpret, Needle, Recombobulate,
 };
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum LocationVariant {
     // Decimal degrees
     DecimalDegreesLatLon(FloatVariant, FloatVariant),

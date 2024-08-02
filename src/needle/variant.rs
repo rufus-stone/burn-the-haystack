@@ -9,7 +9,7 @@ use super::{
 };
 
 /// Enum to represent all the possible byte sequences for each variant
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum NeedleVariant {
     Integer(IntegerVariant),
     Float(FloatVariant),

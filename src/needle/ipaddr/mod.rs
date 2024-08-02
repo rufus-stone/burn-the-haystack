@@ -32,7 +32,7 @@ impl IPv4 {
 impl Matches for IPv4 {
     fn matches(&self, rhs: &Self) -> bool {
         // If rhs has a tolerance, check that lhs falls wthin it
-        match rhs.tolerance {
+        match &rhs.tolerance {
             Some(tolerance) => tolerance.contains(&self.value),
             None => self.value == rhs.value,
         }

@@ -1,5 +1,5 @@
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum MACAddrVariant {
-    LE(Vec<u8>),
-    BE(Vec<u8>),
+    LE([u8; 6]),
+    BE([u8; 6]),
 }

@@ -168,7 +168,7 @@ impl Timestamp {
 impl Matches for Timestamp {
     fn matches(&self, rhs: &Self) -> bool {
         // If rhs has a tolerance, check that lhs falls wthin it
-        match rhs.tolerance {
+        match &rhs.tolerance {
             Some(tolerance) => {
                 let actual_difference = (self.value - rhs.value).whole_seconds().abs();
                 let max_allowed_difference = tolerance.whole_seconds().abs();

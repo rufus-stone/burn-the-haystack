@@ -55,7 +55,7 @@ impl Location {
 impl Matches for Location {
     fn matches(&self, rhs: &Self) -> bool {
         // If rhs has a tolerance, check that lhs falls wthin it
-        match rhs.tolerance {
+        match &rhs.tolerance {
             Some(tolerance) => {
                 let actual_difference = self.value.haversine_distance(&rhs.value) as u64;
 

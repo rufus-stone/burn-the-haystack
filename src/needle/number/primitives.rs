@@ -114,6 +114,8 @@ impl Discombobulate for u64 {
         let varint = self.encode_var_vec();
         variants.push(NeedleVariant::Integer(U64Varint((varint, *self))));
 
+        // TODO: Add 48 bit representations where possible
+
         variants
     }
 }

@@ -12,6 +12,7 @@ use crate::needle::{
 use self::ashes::Ashes;
 
 pub mod ashes;
+pub mod hay;
 
 pub struct Haystack {
     pub data: Vec<u8>,
@@ -29,6 +30,13 @@ impl Haystack {
     pub fn with_needles(data: Vec<u8>, needles: Vec<Needle>) -> Self {
         Self { data, needles }
     }
+
+    // pub fn from_pcap(path: &str) -> Option<Self> {
+    //     let file_path = std::path::PathBuf::from(path);
+    //     if !file_path.exists() {
+    //         return None;
+    //     }
+    // }
 
     pub fn burn(&self) -> Vec<Ashes> {
         let mut ash_pile = Vec::<Ashes>::new();

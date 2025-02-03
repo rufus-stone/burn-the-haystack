@@ -1,10 +1,12 @@
 use anyhow::Result;
-use mac_oui::Oui;
 
+use itertools::Itertools;
 use macaddr::MacAddr6;
+use oui_lookup::oui_db;
 
-use super::Matches;
+use super::{number::variants::IntegerVariant, variant::NeedleVariant, Discombobulate, Matches};
 
+pub mod oui_lookup;
 pub mod variant;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
@@ -61,7 +63,8 @@ impl Matches for MACAddr {
                     if let Some(lhs_value) = self.value {
                         if let Some(rhs_value) = rhs.value {
                             // TODO: Avoid having to reload the entire database every time!
-                            if let Ok(oui_db) = Oui::default() {
+                            if let Ok(oui_db) = oui_db() {
+                                //Oui::default() {
                                 if let Ok(Some(lhs_info)) =
                                     oui_db.lookup_by_mac(&lhs_value.to_string())
                                 {
@@ -81,7 +84,8 @@ impl Matches for MACAddr {
                 }
                 MACTolerance::SpecificCompany(company_name) => {
                     if let Some(lhs_value) = self.value {
-                        if let Ok(oui_db) = Oui::default() {
+                        if let Ok(oui_db) = oui_db() {
+                            // Oui::default() {
                             if let Ok(Some(lhs_info)) = oui_db.lookup_by_mac(&lhs_value.to_string())
                             {
                                 // println!("lhs: {:?}", &lhs_info);
@@ -96,6 +100,27 @@ impl Matches for MACAddr {
             },
             None => self.value == rhs.value,
         }
+    }
+}
+
+impl Discombobulate for MACAddr {
+    fn discombobulate(&self) -> Vec<NeedleVariant> {
+        let mut variants = Vec::<NeedleVariant>::new();
+
+        if let Some(value) = self.value {
+            // u48 little endian
+            let rev = value.as_bytes().into_iter().rev().cloned().collect_vec();
+            if let Ok(v) = IntegerVariant::as_u48_le(&rev) {
+                variants.push(NeedleVariant::Integer(v));
+            }
+
+            // u48 big endian
+            if let Ok(v) = IntegerVariant::as_u48_be(value.as_bytes()) {
+                variants.push(NeedleVariant::Integer(v));
+            }
+        }
+
+        variants
     }
 }
 
@@ -157,5 +182,16 @@ mod tests {
         let target = MACAddr::with_company("Made Up Corp, Inc".to_owned()).unwrap();
 
         assert!(!actual.matches(&target));
+    }
+
+    #[test]
+    fn discombobulation_test() {
+        let actual = MACAddr::new("11:22:33:44:55:66".parse().unwrap()).unwrap();
+
+        let variants = actual.discombobulate();
+
+        for variant in &variants {
+            println!("{:?}", variant);
+        }
     }
 }

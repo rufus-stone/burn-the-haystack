@@ -33,6 +33,13 @@ pub enum IntegerVariant {
     I32BE((Vec<u8>, i32)),
     I32Varint((Vec<u8>, i32)),
 
+    // 48 bit (6 byte values)
+    U48LE((Vec<u8>, u64)),
+    U48BE((Vec<u8>, u64)),
+    // TODO: Figure out if signed integers need special handling when only using 6 bytes
+    // I48LE((Vec<u8>, i64)),
+    // I48BE((Vec<u8>, i64)),
+
     // u64
     U64LE((Vec<u8>, u64)),
     U64BE((Vec<u8>, u64)),
@@ -301,6 +308,61 @@ impl IntegerVariant {
         }
     }
 
+    /// 48 bit values
+    ///
+    pub fn as_u48_le(data: &[u8]) -> Result<IntegerVariant> {
+        if data.len() >= 6 {
+            // u64::from_le_bytes() requires 8 bytes to work, so pad with zeroes
+            let data = [data, &[0u8, 0]].concat();
+            let i = u64::from_le_bytes(data[0..8].try_into()?);
+            Ok(IntegerVariant::U48LE((data[0..6].to_owned(), i)))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::U48LE!"
+            ))
+        }
+    }
+
+    pub fn as_u48_be(data: &[u8]) -> Result<IntegerVariant> {
+        if data.len() >= 6 {
+            // u64::from_be_bytes() requires 8 bytes to work, so pad with zeroes
+            let data = [&[0u8, 0], data].concat();
+            let i = u64::from_be_bytes(data[0..8].try_into()?);
+            Ok(IntegerVariant::U48BE((data[2..8].to_owned(), i)))
+        } else {
+            Err(anyhow!(
+                "Not enough data for this to be a IntegerVariant::U48BE!"
+            ))
+        }
+    }
+
+    // TODO: Figure out if signed integers need special handling when only using 6 bytes
+    // pub fn as_i48_le(data: &[u8]) -> Result<IntegerVariant> {
+    //     if data.len() >= 6 {
+    //         // i64::from_le_bytes() requires 8 bytes to work, so pad with zeroes
+    //         let data = [data, &[0u8, 0]].concat();
+    //         let i = i64::from_le_bytes(data[0..8].try_into()?);
+    //         Ok(IntegerVariant::I48LE((data[0..6].to_owned(), i)))
+    //     } else {
+    //         Err(anyhow!(
+    //             "Not enough data for this to be a IntegerVariant::I48LE!"
+    //         ))
+    //     }
+    // }
+
+    // pub fn as_i48_be(data: &[u8]) -> Result<IntegerVariant> {
+    //     if data.len() >= 6 {
+    //         // i64::from_be_bytes() requires 8 bytes to work, so pad with zeroes
+    //         let data = [&[0u8, 0], data].concat();
+    //         let i = i64::from_be_bytes(data[0..8].try_into()?);
+    //         Ok(IntegerVariant::I48BE((data[2..8].to_owned(), i)))
+    //     } else {
+    //         Err(anyhow!(
+    //             "Not enough data for this to be a IntegerVariant::I48BE!"
+    //         ))
+    //     }
+    // }
+
     /// 64 bit values
     ///
     pub fn as_u64_le(data: &[u8]) -> Result<IntegerVariant> {
@@ -415,6 +477,11 @@ impl IntegerVariant {
             IntegerVariant::I32LE(v) => &v.0,
             IntegerVariant::I32BE(v) => &v.0,
             IntegerVariant::I32Varint(v) => &v.0,
+            IntegerVariant::U48LE(v) => &v.0,
+            IntegerVariant::U48BE(v) => &v.0,
+            // TODO: Figure out if signed integers need special handling when only using 6 bytes
+            // IntegerVariant::I48LE(v) => &v.0,
+            // IntegerVariant::I48BE(v) => &v.0,
             IntegerVariant::U64LE(v) => &v.0,
             IntegerVariant::U64BE(v) => &v.0,
             IntegerVariant::U64Varint(v) => &v.0,
@@ -668,6 +735,67 @@ impl Recombobulate for IntegerVariant {
                     ))
                 }
             }
+            IntegerVariant::U48LE(v) => {
+                if IntegerVariant::as_u48_le(self.byte_sequence()).is_ok() {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
+                        Ok(needle)
+                    } else {
+                        Err(anyhow!(
+                            "Failed to recreate Needle::Integer from IntegerVariant::U48LE"
+                        ))
+                    }
+                } else {
+                    Err(anyhow!(
+                        "Failed to recreate Needle::Integer from IntegerVariant::U48LE"
+                    ))
+                }
+            }
+            IntegerVariant::U48BE(v) => {
+                if IntegerVariant::as_u48_be(self.byte_sequence()).is_ok() {
+                    if let Ok(needle) = Needle::new_integer(v.1 as i64) {
+                        Ok(needle)
+                    } else {
+                        Err(anyhow!(
+                            "Failed to recreate Needle::Integer from IntegerVariant::U48BE"
+                        ))
+                    }
+                } else {
+                    Err(anyhow!(
+                        "Failed to recreate Needle::Integer from IntegerVariant::U48BE"
+                    ))
+                }
+            }
+            // TODO: Figure out if signed integers need special handling when only using 6 bytes
+            // IntegerVariant::I48LE(v) => {
+            //     if IntegerVariant::as_i48_le(self.byte_sequence()).is_ok() {
+            //         if let Ok(needle) = Needle::new_integer(v.1) {
+            //             Ok(needle)
+            //         } else {
+            //             Err(anyhow!(
+            //                 "Failed to recreate Needle::Integer from IntegerVariant::I48LE"
+            //             ))
+            //         }
+            //     } else {
+            //         Err(anyhow!(
+            //             "Failed to recreate Needle::Integer from IntegerVariant::I48LE"
+            //         ))
+            //     }
+            // }
+            // IntegerVariant::I48BE(v) => {
+            //     if IntegerVariant::as_i48_be(self.byte_sequence()).is_ok() {
+            //         if let Ok(needle) = Needle::new_integer(v.1) {
+            //             Ok(needle)
+            //         } else {
+            //             Err(anyhow!(
+            //                 "Failed to recreate Needle::Integer from IntegerVariant::I48BE"
+            //             ))
+            //         }
+            //     } else {
+            //         Err(anyhow!(
+            //             "Failed to recreate Needle::Integer from IntegerVariant::I48BE"
+            //         ))
+            //     }
+            // }
             IntegerVariant::U64LE(v) => {
                 if IntegerVariant::as_u64_le(self.byte_sequence()).is_ok() {
                     if let Ok(needle) = Needle::new_integer(v.1 as i64) {
@@ -830,6 +958,25 @@ impl Interpret for IntegerVariant {
         if let Ok(v) = IntegerVariant::as_i32_varint(data) {
             intepretations.push(v);
         }
+
+        // 48 bit values
+        //
+        if let Ok(v) = IntegerVariant::as_u48_le(data) {
+            intepretations.push(v);
+        }
+
+        if let Ok(v) = IntegerVariant::as_u48_be(data) {
+            intepretations.push(v);
+        }
+
+        // TODO: Figure out if signed integers need special handling when only using 6 bytes
+        // if let Ok(v) = IntegerVariant::as_i48_le(data) {
+        //     intepretations.push(v);
+        // }
+
+        // if let Ok(v) = IntegerVariant::as_i48_be(data) {
+        //     intepretations.push(v);
+        // }
 
         // 64 bit values
         //
@@ -1149,6 +1296,28 @@ mod tests {
         let data = vec![236u8, 255, 255, 255];
 
         let target = Needle::new_integer(-20).unwrap();
+
+        if let Ok(interps) = IntegerVariant::interpret(&data) {
+            for integer_variant in &interps {
+                println!("{:?}", &integer_variant);
+
+                if let Ok(integer) = integer_variant.recombobulate() {
+                    println!("{:?}", &integer);
+
+                    if integer.matches(&target) {
+                        println!("It's a match!");
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn integer_interpretaion_48bit() {
+        // A 48 bit unsigned big endian integer
+        let data = vec![0x01u8, 0x02, 0x03, 0x04, 0x05, 0x06];
+
+        let target = Needle::new_integer(1108152157446).unwrap();
 
         if let Ok(interps) = IntegerVariant::interpret(&data) {
             for integer_variant in &interps {

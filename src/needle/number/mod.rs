@@ -6,7 +6,7 @@ use super::{variant::NeedleVariant, Discombobulate, Matches};
 //#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct Integer {
-    pub value: i64,
+    pub value: i64, // TODO: should this be an i128?
     pub tolerance: Option<i64>,
 }
 

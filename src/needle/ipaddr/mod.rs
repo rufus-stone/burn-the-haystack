@@ -43,7 +43,6 @@ impl Discombobulate for IPv4 {
     fn discombobulate(&self) -> Vec<NeedleVariant> {
         let mut variants = Vec::<NeedleVariant>::new();
 
-        // Epoch seconds
         let ip_as_u32 = self.value.to_bits();
 
         let needle_variants = ip_as_u32.discombobulate();

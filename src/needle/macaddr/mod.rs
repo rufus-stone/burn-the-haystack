@@ -109,7 +109,7 @@ impl Discombobulate for MACAddr {
 
         if let Some(value) = self.value {
             // u48 little endian
-            let rev = value.as_bytes().into_iter().rev().cloned().collect_vec();
+            let rev = value.as_bytes().iter().rev().cloned().collect_vec();
             if let Ok(v) = IntegerVariant::as_u48_le(&rev) {
                 variants.push(NeedleVariant::Integer(v));
             }

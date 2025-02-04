@@ -13,7 +13,7 @@ pub mod variant;
 pub enum MACTolerance {
     SameOUI,
     SameCompany,
-    SpecificCompany(String),
+    SpecificCompany(String), // This uses a case-insensitive sub-string match
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
@@ -37,10 +37,10 @@ impl MACAddr {
         })
     }
 
-    pub fn with_company(company: String) -> Result<Self> {
+    pub fn with_company(company: &str) -> Result<Self> {
         Ok(Self {
             value: None,
-            tolerance: Some(MACTolerance::SpecificCompany(company)),
+            tolerance: Some(MACTolerance::SpecificCompany(company.to_owned())),
         })
     }
 }
@@ -88,9 +88,12 @@ impl Matches for MACAddr {
                             // Oui::default() {
                             if let Ok(Some(lhs_info)) = oui_db.lookup_by_mac(&lhs_value.to_string())
                             {
-                                // println!("lhs: {:?}", &lhs_info);
-                                // println!("rhs {:?}", &company_name);
-                                return &lhs_info.company_name == company_name;
+                                println!("lhs: {:?}", &lhs_info);
+                                println!("rhs {:?}", &company_name);
+                                return lhs_info
+                                    .company_name
+                                    .to_lowercase()
+                                    .contains(&company_name.to_lowercase()); //&lhs_info.company_name == company_name;
                             }
                         }
                     }
@@ -167,19 +170,19 @@ mod tests {
 
         // Only company
         let actual = MACAddr::new("44:38:39:AA:BB:CC".parse().unwrap()).unwrap();
-        let target = MACAddr::with_company("Cumulus Networks, Inc".to_owned()).unwrap();
+        let target = MACAddr::with_company("Cumulus Networks, Inc").unwrap();
 
         assert!(actual.matches(&target));
 
         // Not real MAC
         let actual = MACAddr::new("11:22:33:44:55:66".parse().unwrap()).unwrap();
-        let target = MACAddr::with_company("Cumulus Networks, Inc".to_owned()).unwrap();
+        let target = MACAddr::with_company("Cumulus Networks, Inc").unwrap();
 
         assert!(!actual.matches(&target));
 
         // Not real company
         let actual = MACAddr::new("44:38:39:DD:EE:FF".parse().unwrap()).unwrap();
-        let target = MACAddr::with_company("Made Up Corp, Inc".to_owned()).unwrap();
+        let target = MACAddr::with_company("Made Up Corp, Inc").unwrap();
 
         assert!(!actual.matches(&target));
     }

@@ -7,8 +7,10 @@ pub mod variant;
 
 use std::net::Ipv4Addr;
 
+use ::macaddr::MacAddr6;
 use anyhow::{anyhow, Result};
 use location::variant::LocationVariant;
+use macaddr::MACTolerance;
 use measurements::Distance;
 use time::{format_description, Duration, PrimitiveDateTime};
 
@@ -103,13 +105,22 @@ impl Needle {
     }
 
     // MAC Address creation
-    // pub fn new_mac_address(dtg: &str) -> Result<Self> {
-    //     todo!()
-    // }
+    pub fn new_mac_address(macaddr: MacAddr6) -> Result<Self> {
+        Ok(Needle::MacAddr(macaddr::MACAddr::new(macaddr)?))
+    }
 
-    // pub fn new_mac_address_with_tolerance(dtg: &str, tolerance: u8) -> Result<Self> {
-    //     todo!()
-    // }
+    pub fn new_mac_address_with_tolerance(
+        macaddr: MacAddr6,
+        tolerance: MACTolerance,
+    ) -> Result<Self> {
+        Ok(Needle::MacAddr(macaddr::MACAddr::with_tolerance(
+            macaddr, tolerance,
+        )?))
+    }
+
+    pub fn any_mac_address_for_company(company: &str) -> Result<Self> {
+        Ok(Needle::MacAddr(macaddr::MACAddr::with_company(company)?))
+    }
 }
 
 pub trait Matches {
@@ -122,7 +133,7 @@ impl Matches for Needle {
             (Needle::Timestamp(lhs), Needle::Timestamp(rhs)) => lhs.matches(rhs),
             (Needle::Location(lhs), Needle::Location(rhs)) => lhs.matches(rhs),
             (Needle::IpAddr(lhs), Needle::IpAddr(rhs)) => lhs.matches(rhs),
-            (Needle::MacAddr(lhs), Needle::MacAddr(rhs)) => lhs == rhs,
+            (Needle::MacAddr(lhs), Needle::MacAddr(rhs)) => lhs.matches(rhs),
             (Needle::Integer(lhs), Needle::Integer(rhs)) => lhs.matches(rhs),
             (Needle::Float(lhs), Needle::Float(rhs)) => lhs.matches(rhs),
             (Needle::Bytes(lhs), Needle::Bytes(rhs)) => lhs == rhs,
@@ -225,7 +236,9 @@ mod tests {
 
     use time::Duration;
 
-    use crate::needle::{location::Location, number::*, Discombobulate, Matches, Needle};
+    use crate::needle::{
+        location::Location, macaddr::MACTolerance, number::*, Discombobulate, Matches, Needle,
+    };
 
     use super::Interpret;
 
@@ -453,6 +466,57 @@ mod tests {
         let lhs = Needle::new_ip_address("192.1.2.3".parse().unwrap()).unwrap();
         let rhs =
             Needle::new_ip_address_with_tolerance("192.255.255.255".parse().unwrap(), 8).unwrap();
+
+        assert!(lhs.matches(&rhs));
+    }
+
+    #[test]
+    fn matches_macaddr() {
+        // Exactly the same
+        let lhs = Needle::new_mac_address("11:22:33:AA:BB:CC".parse().unwrap()).unwrap();
+        let rhs = Needle::new_mac_address("11:22:33:AA:BB:CC".parse().unwrap()).unwrap();
+
+        assert!(lhs.matches(&rhs));
+
+        // Not the same
+        let lhs = Needle::new_mac_address("11:22:33:AA:BB:CC".parse().unwrap()).unwrap();
+        let rhs = Needle::new_mac_address("02:00:00:00:00:00".parse().unwrap()).unwrap();
+
+        assert!(!lhs.matches(&rhs));
+
+        // Within the same OUI
+        let lhs = Needle::new_mac_address("11:22:33:AA:BB:CC".parse().unwrap()).unwrap();
+        let rhs = Needle::new_mac_address_with_tolerance(
+            "11:22:33:DD:EE:FF".parse().unwrap(),
+            MACTolerance::SameOUI,
+        )
+        .unwrap();
+
+        assert!(lhs.matches(&rhs));
+
+        // Within the same company
+        let lhs = Needle::new_mac_address("14:8F:21:44:55:66".parse().unwrap()).unwrap();
+        let rhs = Needle::new_mac_address_with_tolerance(
+            "38:F9:F5:11:22:33".parse().unwrap(),
+            MACTolerance::SameCompany,
+        )
+        .unwrap();
+
+        assert!(lhs.matches(&rhs));
+
+        // Not within the same company
+        let lhs = Needle::new_mac_address("14:8F:21:44:55:66".parse().unwrap()).unwrap();
+        let rhs = Needle::new_mac_address_with_tolerance(
+            "0C:C4:13:11:22:33".parse().unwrap(),
+            MACTolerance::SameCompany,
+        )
+        .unwrap();
+
+        assert!(!lhs.matches(&rhs));
+
+        // Within the specified company
+        let lhs = Needle::new_mac_address("14:96:E5:AA:BB:CC".parse().unwrap()).unwrap();
+        let rhs = Needle::any_mac_address_for_company("Samsung").unwrap();
 
         assert!(lhs.matches(&rhs));
     }

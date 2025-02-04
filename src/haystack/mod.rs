@@ -3,6 +3,7 @@ use itertools::Itertools;
 use crate::needle::{
     ipaddr::variant::IPv4Variant,
     location::variant::LocationVariant,
+    macaddr::variant::MACAddrVariant,
     number::variants::{FloatVariant, IntegerVariant},
     timestamp::variants::TimestampVariant,
     variant::NeedleVariant,
@@ -203,6 +204,36 @@ impl Haystack {
                     }
                 }
             }
+
+            // MAC Address
+            if let Ok(variants) = MACAddrVariant::interpret(window) {
+                for variant in &variants {
+                    //println!("{:?}", &variant);
+
+                    if let Ok(putative) = variant.recombobulate() {
+                        //println!("{:?}", &needle);
+
+                        let hits = self
+                            .needles
+                            .iter()
+                            .filter(|target| putative.matches(target))
+                            .map(|target| {
+                                //println!("It's a match!");
+                                Ashes::new(
+                                    target,
+                                    putative.clone(),
+                                    NeedleVariant::MacAddr(variant.clone()),
+                                    i,
+                                )
+                            })
+                            .collect_vec();
+
+                        for hit in hits {
+                            ash_pile.push(hit);
+                        }
+                    }
+                }
+            }
         }
 
         ash_pile
@@ -355,11 +386,15 @@ mod tests {
 
     #[test]
     fn complex_test() {
-        // Some random bytes with an set of coordinates in the middle (-31.95, 115.85 DecimalMinutesLatLon(F32LE)), a timestamp (2023-12-31 23:59:58 EpochNanos(I64Varint)), and an IP address (192.168.0.1)
+        // Some random bytes with:
+        // 1) a set of coordinates in the middle (-31.95, 115.85 as DecimalMinutesLatLon(F32LE))
+        // 2) a timestamp (2023-12-31 23:59:58 as EpochNanos(I64Varint))
+        // 3) an IP address (192.168.0.1 as Numeric(U32BE))
+        // 4) a MAC address (14:7D:DA:AB:CD:EF as Numeric(U48LE))
         let data: Vec<u8> = vec![
             0xde, 0xad, 0xbe, 0xef, 0x00, 0xa0, 0xef, 0xc4, 0x00, 0x38, 0xd9, 0x45, 0xca, 0xfe,
             0xba, 0xbe, 0x80, 0xb0, 0xfb, 0xa2, 0xd1, 0x85, 0x88, 0xa6, 0x2f, 0x00, 0x00, 0x00,
-            0xc0, 0xa8, 0x00, 0x01, 0xff, 0xff,
+            0xc0, 0xa8, 0x00, 0x01, 0xff, 0xff, 0xef, 0xcd, 0xab, 0xda, 0x7d, 0x14, 0xff, 0xff,
         ];
 
         // Locations
@@ -382,6 +417,9 @@ mod tests {
         let google_dns = Needle::new_ip_address("8.8.8.8".parse().unwrap()).unwrap();
         let private_ip =
             Needle::new_ip_address_with_tolerance("192.168.0.0".parse().unwrap(), 16).unwrap();
+
+        // MACs
+        //let any_apple = Needle::new_
 
         // Configure the needles and haystack
         let needles = vec![nyc, perth, mid_december, august, google_dns, private_ip];

@@ -187,50 +187,99 @@ impl Discombobulate for Timestamp {
     fn discombobulate(&self) -> Vec<NeedleVariant> {
         let mut variants = Vec::<NeedleVariant>::new();
 
-        // Epoch seconds
+        // Get the seconds and nanoseconds here for use later
+        let epoch_nanos = self.value.assume_utc().unix_timestamp_nanos();
         let epoch_secs = self.value.assume_utc().unix_timestamp();
+
+        // Unix Epoch seconds
         if let Ok(integer_needle) = Needle::new_integer(epoch_secs) {
             let needle_variants = integer_needle.discombobulate();
 
             for needle_variant in &needle_variants {
                 if let NeedleVariant::Integer(v) = needle_variant {
-                    variants.push(NeedleVariant::Timestamp(EpochSecs(v.clone())));
+                    variants.push(NeedleVariant::Timestamp(UnixEpochSecs(v.clone())));
                 }
             }
         }
 
-        // Epoch millis
+        // Unix Epoch seconds float
+        let epoch_secs_float = (epoch_nanos as f64) / 1000000000.0;
+        if let Ok(float_needle) = Needle::new_float(epoch_secs_float) {
+            let needle_variants = float_needle.discombobulate();
+
+            for needle_variant in &needle_variants {
+                if let NeedleVariant::Float(v) = needle_variant {
+                    variants.push(NeedleVariant::Timestamp(UnixEpochSecsFloat(v.clone())));
+                }
+            }
+        }
+
+        // Unix Epoch millis
         let epoch_millis = epoch_secs * 1000;
         if let Ok(integer_needle) = Needle::new_integer(epoch_millis) {
             let needle_variants = integer_needle.discombobulate();
 
             for needle_variant in &needle_variants {
                 if let NeedleVariant::Integer(v) = needle_variant {
-                    variants.push(NeedleVariant::Timestamp(EpochMillis(v.clone())));
+                    variants.push(NeedleVariant::Timestamp(UnixEpochMillis(v.clone())));
                 }
             }
         }
 
-        // Epoch micros
+        // Unix Epoch millis float
+        let epoch_millis_float = (epoch_nanos as f64) / 1000000.0;
+        if let Ok(float_needle) = Needle::new_float(epoch_millis_float) {
+            let needle_variants = float_needle.discombobulate();
+
+            for needle_variant in &needle_variants {
+                if let NeedleVariant::Float(v) = needle_variant {
+                    variants.push(NeedleVariant::Timestamp(UnixEpochMillisFloat(v.clone())));
+                }
+            }
+        }
+
+        // Unix Epoch micros
         let epoch_micros = epoch_millis * 1000;
         if let Ok(integer_needle) = Needle::new_integer(epoch_micros) {
             let needle_variants = integer_needle.discombobulate();
 
             for needle_variant in &needle_variants {
                 if let NeedleVariant::Integer(v) = needle_variant {
-                    variants.push(NeedleVariant::Timestamp(EpochMicros(v.clone())));
+                    variants.push(NeedleVariant::Timestamp(UnixEpochMicros(v.clone())));
                 }
             }
         }
 
-        // Epoch nanos
-        let epoch_nanos = epoch_micros * 1000;
-        if let Ok(integer_needle) = Needle::new_integer(epoch_nanos) {
+        // Unix Epoch micros float
+        let epoch_micros_float = (epoch_nanos as f64) / 1000.0;
+        if let Ok(float_needle) = Needle::new_float(epoch_micros_float) {
+            let needle_variants = float_needle.discombobulate();
+
+            for needle_variant in &needle_variants {
+                if let NeedleVariant::Float(v) = needle_variant {
+                    variants.push(NeedleVariant::Timestamp(UnixEpochMicrosFloat(v.clone())));
+                }
+            }
+        }
+
+        // Unix Epoch nanos
+        if let Ok(integer_needle) = Needle::new_integer(epoch_nanos as i64) {
             let needle_variants = integer_needle.discombobulate();
 
             for needle_variant in &needle_variants {
                 if let NeedleVariant::Integer(v) = needle_variant {
-                    variants.push(NeedleVariant::Timestamp(EpochNanos(v.clone())));
+                    variants.push(NeedleVariant::Timestamp(UnixEpochNanos(v.clone())));
+                }
+            }
+        }
+
+        // Unix Epoch nanos float
+        if let Ok(float_needle) = Needle::new_float(epoch_nanos as f64) {
+            let needle_variants = float_needle.discombobulate();
+
+            for needle_variant in &needle_variants {
+                if let NeedleVariant::Float(v) = needle_variant {
+                    variants.push(NeedleVariant::Timestamp(UnixEpochNanosFloat(v.clone())));
                 }
             }
         }
@@ -241,15 +290,18 @@ impl Discombobulate for Timestamp {
         // WebKit/Chrome timestamps
         // A 64-bit value for microseconds since Jan 1, 1601 00:00 UTC. One microsecond is one-millionth of a second
 
-        // Apple Cocoa Core Data timestamp
+        // Apple CFAbsoluteTime
         // The number of seconds (or nanoseconds) since midnight, January 1, 2001
-        // Difference between this and epoch is 978307200 seconds
+        // Difference between this and unix epoch is 978307200 seconds
 
         // Mac HFS+ timestamp
-        // Seconds since January 1, 1904 (add 2082844800 to epoch)
+        // Seconds since January 1, 1904 (add 2082844800 to unix epoch)
+
+        // Garmin FIT
+        // Seconds since December 31, 1989
 
         // SAS 4GL datetime
-        // Seconds since January 1, 1960 (add 315619200 to epoch)
+        // Seconds since January 1, 1960 (add 315619200 to unix epoch)
 
         // DOS/FAT timestamp
         let dos_time = self.to_dos_time();
@@ -261,7 +313,9 @@ impl Discombobulate for Timestamp {
             }
         }
 
-        // NTP timestamp
+        // NTP / SNTP timestamp
+        // Fixed point 64-bit value where the most significant 32 bits represent the number of seconds elapsed since 1900-01-01 00:00:00Z
+        // and the least significant 32 bits represent the fractional component of the second (approx. 0.2 nanosecond precision)
 
         variants
     }
@@ -269,7 +323,6 @@ impl Discombobulate for Timestamp {
 
 #[cfg(test)]
 mod tests {
-    //use integer_encoding::VarInt;
     use time::{format_description, macros::datetime};
 
     use super::*;
@@ -304,30 +357,9 @@ mod tests {
 
         let variants = dtg.discombobulate();
         for variant in &variants {
-            println!("{:?}", variant);
+            println!("{:02x?}", variant);
         }
 
-        // let dos_time = dtg.to_dos_time();
-        // println!("DOS: {}", dos_time);
-
-        // let dtg2 = Timestamp::from_dos_time(dos_time).unwrap();
-        // println!("DTG: {}", dtg2.value.format(&format).unwrap());
-
-        // assert_eq!(dtg, dtg2);
-
-        // let dtg = Timestamp::new(datetime!(1969-12-31 23:59:59));
-        // println!("{:?}", &dtg);
-        // println!("{:?}", &dtg.to_epoch_secs());
-        // for variant in dtg.discombobulate() {
-        //     println!("{:02x?}", variant);
-        // }
-
-        // let i1: i32 = -10;
-        // let v = i1.encode_var_vec();
-
-        // let i2 = i32::decode_var(&v).unwrap().0;
-        // println!("{} -> {:02x?} -> {}", i1, v, i2);
-
-        assert_eq!(1, 1);
+        assert_eq!(variants.len(), 49);
     }
 }

@@ -1,22 +1,23 @@
 use anyhow::{anyhow, Result};
 
 use crate::needle::{
-    number::variants::IntegerVariant, timestamp::Timestamp, Interpret, Needle, Recombobulate,
+    number::variants::{FloatVariant, IntegerVariant},
+    timestamp::Timestamp,
+    Interpret, Needle, Recombobulate,
 };
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum TimestampVariant {
-    // Epoch seconds
-    EpochSecs(IntegerVariant),
-
-    // Epoch millis
-    EpochMillis(IntegerVariant),
-
-    // Epoch micros
-    EpochMicros(IntegerVariant),
-
-    // Epoch nanos
-    EpochNanos(IntegerVariant),
+    // Unix epoch
+    // Number of seconds elapsed since 1970-01-01 00:00:00Z
+    UnixEpochSecs(IntegerVariant),
+    UnixEpochSecsFloat(FloatVariant),
+    UnixEpochMillis(IntegerVariant),
+    UnixEpochMillisFloat(FloatVariant),
+    UnixEpochMicros(IntegerVariant),
+    UnixEpochMicrosFloat(FloatVariant),
+    UnixEpochNanos(IntegerVariant),
+    UnixEpochNanosFloat(FloatVariant),
 
     // DOS time
     DOSTime(IntegerVariant),
@@ -25,7 +26,7 @@ pub enum TimestampVariant {
 impl Recombobulate for TimestampVariant {
     fn recombobulate(&self) -> Result<Needle> {
         match self {
-            TimestampVariant::EpochSecs(v) => {
+            TimestampVariant::UnixEpochSecs(v) => {
                 if let Ok(Needle::Integer(integer)) = v.recombobulate() {
                     Ok(Needle::Timestamp(Timestamp::from_epoch_secs(
                         integer.value,
@@ -36,7 +37,18 @@ impl Recombobulate for TimestampVariant {
                     ))
                 }
             }
-            TimestampVariant::EpochMillis(v) => {
+            TimestampVariant::UnixEpochSecsFloat(v) => {
+                if let Ok(Needle::Float(float)) = v.recombobulate() {
+                    Ok(Needle::Timestamp(Timestamp::from_epoch_nanos(
+                        (float.value * 1000000000.0) as i64, // Turn into nanoseconds to preserve any nanosecond precision
+                    )?))
+                } else {
+                    Err(anyhow!(
+                        "Failed to recreate Needle::Timestamp from epoch secs float"
+                    ))
+                }
+            }
+            TimestampVariant::UnixEpochMillis(v) => {
                 if let Ok(Needle::Integer(integer)) = v.recombobulate() {
                     Ok(Needle::Timestamp(Timestamp::from_epoch_millis(
                         integer.value,
@@ -47,7 +59,18 @@ impl Recombobulate for TimestampVariant {
                     ))
                 }
             }
-            TimestampVariant::EpochMicros(v) => {
+            TimestampVariant::UnixEpochMillisFloat(v) => {
+                if let Ok(Needle::Float(float)) = v.recombobulate() {
+                    Ok(Needle::Timestamp(Timestamp::from_epoch_nanos(
+                        (float.value * 1000000.0) as i64, // Turn into nanoseconds to preserve any nanosecond precision
+                    )?))
+                } else {
+                    Err(anyhow!(
+                        "Failed to recreate Needle::Timestamp from epoch millis float"
+                    ))
+                }
+            }
+            TimestampVariant::UnixEpochMicros(v) => {
                 if let Ok(Needle::Integer(integer)) = v.recombobulate() {
                     Ok(Needle::Timestamp(Timestamp::from_epoch_micros(
                         integer.value,
@@ -58,7 +81,18 @@ impl Recombobulate for TimestampVariant {
                     ))
                 }
             }
-            TimestampVariant::EpochNanos(v) => {
+            TimestampVariant::UnixEpochMicrosFloat(v) => {
+                if let Ok(Needle::Float(float)) = v.recombobulate() {
+                    Ok(Needle::Timestamp(Timestamp::from_epoch_nanos(
+                        (float.value * 1000.0) as i64, // Turn into nanoseconds to preserve any nanosecond precision
+                    )?))
+                } else {
+                    Err(anyhow!(
+                        "Failed to recreate Needle::Timestamp from epoch micros float"
+                    ))
+                }
+            }
+            TimestampVariant::UnixEpochNanos(v) => {
                 if let Ok(Needle::Integer(integer)) = v.recombobulate() {
                     Ok(Needle::Timestamp(Timestamp::from_epoch_nanos(
                         integer.value,
@@ -66,6 +100,17 @@ impl Recombobulate for TimestampVariant {
                 } else {
                     Err(anyhow!(
                         "Failed to recreate Needle::Timestamp from epoch nanos"
+                    ))
+                }
+            }
+            TimestampVariant::UnixEpochNanosFloat(v) => {
+                if let Ok(Needle::Float(float)) = v.recombobulate() {
+                    Ok(Needle::Timestamp(Timestamp::from_epoch_nanos(
+                        float.value as i64,
+                    )?))
+                } else {
+                    Err(anyhow!(
+                        "Failed to recreate Needle::Timestamp from epoch nanos float"
                     ))
                 }
             }
@@ -100,10 +145,10 @@ impl Interpret for TimestampVariant {
         // First, interpret as integers, as these are the basis for most of our timestamp formats
         if let Ok(integer_variants) = IntegerVariant::interpret(data) {
             for variant in &integer_variants {
-                intepretations.push(TimestampVariant::EpochSecs(variant.clone()));
-                intepretations.push(TimestampVariant::EpochMillis(variant.clone()));
-                intepretations.push(TimestampVariant::EpochMicros(variant.clone()));
-                intepretations.push(TimestampVariant::EpochNanos(variant.clone()));
+                intepretations.push(TimestampVariant::UnixEpochSecs(variant.clone()));
+                intepretations.push(TimestampVariant::UnixEpochMillis(variant.clone()));
+                intepretations.push(TimestampVariant::UnixEpochMicros(variant.clone()));
+                intepretations.push(TimestampVariant::UnixEpochNanos(variant.clone()));
 
                 // Test for valid DOS Times for u32 variants
                 if match variant {
@@ -114,6 +159,16 @@ impl Interpret for TimestampVariant {
                 } {
                     intepretations.push(TimestampVariant::DOSTime(variant.clone()))
                 }
+            }
+        }
+
+        // Next, interpret as floats
+        if let Ok(float_variants) = FloatVariant::interpret(data) {
+            for variant in &float_variants {
+                intepretations.push(TimestampVariant::UnixEpochSecsFloat(variant.clone()));
+                intepretations.push(TimestampVariant::UnixEpochMillisFloat(variant.clone()));
+                intepretations.push(TimestampVariant::UnixEpochMicrosFloat(variant.clone()));
+                intepretations.push(TimestampVariant::UnixEpochNanosFloat(variant.clone()));
             }
         }
 
@@ -140,7 +195,7 @@ mod tests {
         let data = vec![0x7eu8, 0x00, 0x92, 0x65]; // EpochSecsLE
 
         let target = Needle::new_timestamp("2023-12-31 23:59:58").unwrap();
-        //println!("{:02x?}", target.discombobulate());
+        // println!("{:02x?}", target.discombobulate());
 
         let interps = TimestampVariant::interpret(&data);
         assert!(interps.is_ok());

@@ -304,7 +304,9 @@ mod tests {
 
         assert!(matches!(
             results[1].variant,
-            NeedleVariant::Timestamp(TimestampVariant::EpochNanos(IntegerVariant::I64Varint(_)))
+            NeedleVariant::Timestamp(TimestampVariant::UnixEpochNanos(IntegerVariant::I64Varint(
+                _
+            )))
         )); // The timestamp variant that matched should have been an EpochNanos built using an I64Varint
 
         assert!(matches!(

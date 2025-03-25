@@ -388,7 +388,7 @@ mod tests {
     fn complex_test() {
         // Some random bytes with:
         // 1) a set of coordinates in the middle (-31.95, 115.85 as DecimalMinutesLatLon(F32LE))
-        // 2) a timestamp (2023-12-31 23:59:58 as EpochNanos(I64Varint))
+        // 2) a timestamp (2023-12-31 23:59:58 as UnixEpochNanos(I64Varint))
         // 3) an IP address (192.168.0.1 as Numeric(U32BE))
         // 4) a MAC address (14:7D:DA:AB:CD:EF as Numeric(U48LE))
         let data: Vec<u8> = vec![
@@ -449,8 +449,10 @@ mod tests {
 
         assert!(matches!(
             results[1].variant,
-            NeedleVariant::Timestamp(TimestampVariant::EpochNanos(IntegerVariant::I64Varint(_)))
-        )); // The timestamp variant that matched should have been an EpochNanos built using an I64Varint
+            NeedleVariant::Timestamp(TimestampVariant::UnixEpochNanos(IntegerVariant::I64Varint(
+                _
+            )))
+        )); // The timestamp variant that matched should have been a UnixEpochNanos built using an I64Varint
 
         assert!(matches!(
             results[2].variant,
